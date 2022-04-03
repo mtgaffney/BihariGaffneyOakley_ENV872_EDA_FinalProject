@@ -1,8 +1,8 @@
 #Coweeta data Initial EDA
 #Enikoe Bihari, Michael Gaffney, Cal Oakley
 
-#set working directory
-#setwd("/Users/michaelgaffney/Documents/Duke University/Nicholas School of the Environment/05 Spring 2022/ENVIRON 872 Environmental Data Analytics/EDA_FinalProject")
+#check working directory; should be the project folder
+getwd()
 
 #load packages
 library(tidyverse)
@@ -26,8 +26,9 @@ mapView(coweeta.sf, col.regions = "darkgreen", map.types = "CartoDB.Positron", l
 
 #epxlore the species data a little; try a random plot of some of the species (Acer Rubrum, Rhododendron maximum, Carya tomentosa) against elevation
 #set ggplot data source to null because we're using two different datasets
-ggplot(NULL) +
-  geom_point(aes(x = coweeta.env$Elevation, y = coweeta.species$ACRU), color = "darkgreen") +
-  geom_point(aes(x = coweeta.env$Elevation, y = coweeta.species$RHMA), color = "darkred") +
-  geom_point(aes(x = coweeta.env$Elevation, y = coweeta.species$CATO), color = "darkblue") 
+ggplot(NULL, aes(x = coweeta.env$Elevation)) +
+  geom_point(aes(y = coweeta.species$ACRU), color = "darkgreen") +
+  geom_point(aes(y = coweeta.species$RHMA), color = "darkred") +
+  geom_point(aes(y = coweeta.species$CATO), color = "darkblue") +
+  labs(x = "Elevation", y = "Basal Area")
   
