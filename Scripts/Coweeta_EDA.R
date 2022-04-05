@@ -1,7 +1,7 @@
 #Coweeta data Initial EDA
 #Enikoe Bihari, Michael Gaffney, Cal Oakley
 
-#check working directory; should be the project folder
+#check working directory; should be the project folder; used setwd if not.
 getwd()
 
 #load packages
