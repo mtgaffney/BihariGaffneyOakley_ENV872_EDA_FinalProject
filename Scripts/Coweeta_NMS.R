@@ -140,7 +140,7 @@ points(coweeta.species.nms[,2:1],pch=19,col="darkred", cex=6.0*coweeta.species.r
 #black locust illustrates the elevation gradient on NMS 2, so we want that
 points(coweeta.species.nms[,2:1],pch=19,col="purple", cex=6.0*coweeta.species.rel$ROPS)
 #add in the legend names and colors:
-legend.txt <- c("ACRU","LITU","PIRI","QURU","RHMA","ROPS")
+legend.txt <- c("ACRU","LITU","PIRI","QURU","QUPR", "RHMA","ROPS")
 legend.col <- c("darkgreen","orange","blue","lightgreen","cyan","darkred","purple")
 legend("topright",horiz=F,legend=legend.txt,text.col=legend.col,bty="n")
 box(lwd=2)
