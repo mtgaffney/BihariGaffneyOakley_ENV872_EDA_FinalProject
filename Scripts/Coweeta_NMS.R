@@ -41,21 +41,20 @@ length(coweeta.species.bcd)
 length(coweeta.species.bcd[coweeta.species.bcd==1])
 #saturation ratio
 length(coweeta.species.bcd[coweeta.species.bcd==1])/length(coweeta.species.bcd)
-#becuase the distance matrix is saturdated, we're going to use extended bray curtis here. Might not be necessary.
-coweeta.species.xbcd <- stepacross(coweeta.species.bcd)
+#the distance matrix is not saturated, so we don't need to do anything else.
 
 #now that we have a distance matrix that will actually work, let's run the NMS.
 #NB: this is a first run, and it will create 60 ordinations (stepdown, 1:6 dims, 10 iterations each). 
 #We will use these to figure out what the best number of axes is.
 
-coweeta.species.nmsstep <- nmds(coweeta.species.xbcd, nits=10, mindim=1, maxdim=6)
+coweeta.species.nmsstep <- nmds(coweeta.species.bcd, nits=10, mindim=1, maxdim=6)
 attributes(coweeta.species.nmsstep)
 
 #Now we need to plot the stress values and R2 values for each dimension (# of axes)
 plot.nmds(coweeta.species.nmsstep) 
-#second plot shows the R^2 explained by # of dimensions; 2 gets us about 60% of the variance, so we can try that.
+#second plot shows the R^2 explained by # of dimensions; 2 axes gets us about 60% of the variance, so we can try that.
 #run the NMS again for 2 dimensions, with 20 repetitions
-coweeta.species.nmds <- nmds(coweeta.species.xbcd, mindim=2, maxdim=2, nits=20)
+coweeta.species.nmds <- nmds(coweeta.species.bcd, mindim=2, maxdim=2, nits=20)
 #which of these 20 repetitions did the best? NB: NMS is stochastic, so every run is a little different
 (s.min <- which.min(coweeta.species.nmds$stress))
 #this returns the "stress" value for the best one--need to check what that value actually means
@@ -78,28 +77,28 @@ colnames(coweeta.species.nms) <- c("NMS1", "NMS2")
 #compute the distances between points in the NMS
 nms2.xod <- dist(coweeta.species.nms)
 #plot the NMS distances against the original Extended Bray Curtis Distances
-plot(nms2.xod, coweeta.species.xbcd, pch="*",xlab="Ordination Distance", ylab="Extended B-C Distance")
+plot(nms2.xod, coweeta.species.bcd, pch="*",xlab="Ordination Distance", ylab="Extended B-C Distance")
 abline(0,1,col="red") # put in the 1:1 line (intercept=0, slope=1)
 title("Shepard Diagram")
 box(lwd=2)
 #This came out alright, but not fantastic (we'd want the points to hug the line better). Check with DLU to see if work is required on this.
 #We can also run a Mantel test to see what the correlations actually are; but this code isn't playing nice right now
-#ecodist::mantel(nms2.xod ~ coweeta.species.xbcd,nperm=10000,nboot=0)
+#ecodist::mantel(nms2.xod ~ coweeta.species.bcd,nperm=10000,nboot=0)
 
 #now we want to get the R^2 for the NMS
 #This is done by differencing for NMS, since it doesn't work like a linear model at all
 nms.od1 <- dist(coweeta.species.nms[,1])
 nms.od2 <- dist(coweeta.species.nms[,1:2])
 #check axis 1
-r1 <- cor(coweeta.species.xbcd,nms.od1)
+r1 <- cor(coweeta.species.bcd,nms.od1)
 r2.1 <- r1^2; r2.1
 # axis 2 is 2-D minus 1-D solution:
-r2 <- cor(coweeta.species.xbcd,nms.od2)
+r2 <- cor(coweeta.species.bcd,nms.od2)
 r2.2 <- r2^2; r2.2-r2.1; r2.2
 #first number is the amount captured by the second axis; second is total variance
 
 #The final stage for NMS is to actually interpret what we have in a plot.
-#first, corrleated the NMS axes (which come from species data) with the environmental variables
+#first, corrleate the NMS axes (which come from species data) with the environmental variables
 coweeta.species.nms.cor2m <- as.matrix(cor2m(coweeta.env.11[,-1], coweeta.species.nms))
 #this is a table we'll probably want at some point, so make a note of it
 
@@ -122,26 +121,45 @@ box(lwd=2)
 #NMS 1 has something to do with soil content: Carbon Nitrogen ratio is positively correlated, potassium negatively
 #NMS 2 seems to be a very weak elevation gradient; given that elevation isn't super important here, that's not a surprise
 
-#We can plot this again to better iullstrate how the species are sorting in NMS space
+#We can plot this again to better iullstrate how the species are sorting in NMS space. This gets messsy visually, so two plots is better
+#First, create a plot that illustrates the soil moisture gradient
+#plot NMS space
 plot(coweeta.species.nms[,2:1],pch=3, xlab="NMS 2",ylab="NMS 1")
 #color species by relative abundance!
-#red maple is everywhere so it should be on here too
-points(coweeta.species.nms[,2:1],pch=19,col="darkgreen", cex=6.0*coweeta.species.rel$ACRU)
-#tulip seems to sort nice so we can add that in too
-points(coweeta.species.nms[,2:1],pch=19,col="orange", cex=6.0*coweeta.species.rel$LITU)
-#pitch pine sorts well with the soil gradient component so let's do that too.
+#red maple is everywhere; I use it as a baselayer
+points(coweeta.species.nms[,2:1],pch=19,col="gray", cex=6.0*coweeta.species.rel$ACRU)
+#DLU says that scarlet oak is following the sopil moisture gradient in this space, so let's plot that
+points(coweeta.species.nms[,2:1],pch=19,col="purple", cex=6.0*coweeta.species.rel$QUCO)
+#DLU also said mountain laurels are a pretty good guess here, so let's do that
+points(coweeta.species.nms[,2:1],pch=19,col="red", cex=6.0*coweeta.species.rel$KALA)
+#pitch pine = low soil moisture
 points(coweeta.species.nms[,2:1],pch=19,col="blue", cex=6.0*coweeta.species.rel$PIRI)
-#add red oak in to fill out the corner
-points(coweeta.species.nms[,2:1],pch=19,col="lightgreen", cex=6.0*coweeta.species.rel$QURU)
-#chestnut oak is very common, so it's worth putting that in as well
-points(coweeta.species.nms[,2:1],pch=19,col="cyan", cex=6.0*coweeta.species.rel$QUPR)
-#great laurels are everywhere
-points(coweeta.species.nms[,2:1],pch=19,col="darkred", cex=6.0*coweeta.species.rel$RHMA)
-#black locust illustrates the elevation gradient on NMS 2, so we want that
-points(coweeta.species.nms[,2:1],pch=19,col="purple", cex=6.0*coweeta.species.rel$ROPS)
+#DLU also says that birches would sort on the low end of the soil moisutre gradient, so add those in as well
+points(coweeta.species.nms[,2:1],pch=19,col="green", cex=6.0*coweeta.species.rel$BELE)
+#tulip seems to sort on high moisture
+points(coweeta.species.nms[,2:1],pch=19,col="orange", cex=6.0*coweeta.species.rel$LITU)
 #add in the legend names and colors:
-legend.txt <- c("ACRU","LITU","PIRI","QURU","QUPR", "RHMA","ROPS")
-legend.col <- c("darkgreen","orange","blue","lightgreen","cyan","darkred","purple")
+legend.txt <- c("ACRU","QUCO","KALA","PIRO","BELE", "LITU")
+legend.col <- c("gray","purple", "red","blue","green","orange")
+legend("topright",horiz=F,legend=legend.txt,text.col=legend.col,bty="n")
+box(lwd=2)
+
+#let's make a second plot to illustrate the elevation gradient on NMS 2, same method
+plot(coweeta.species.nms[,2:1],pch=3, xlab="NMS 2",ylab="NMS 1")
+#red maple baselayer
+points(coweeta.species.nms[,2:1],pch=19,col="gray", cex=6.0*coweeta.species.rel$ACRU)
+#white oak seems to do very in low elevation
+points(coweeta.species.nms[,2:1],pch=19,col="lightgreen", cex=6.0*coweeta.species.rel$QUAL)
+#dogwoods do very well in low elevation too
+points(coweeta.species.nms[,2:1],pch=19,col="darkgreen", cex=6.0*coweeta.species.rel$COFL)
+#great laurels clump in the heigher elevations.
+points(coweeta.species.nms[,2:1],pch=19,col="darkred", cex=6.0*coweeta.species.rel$RHMA)
+#Black locusts also work well in this case.
+points(coweeta.species.nms[,2:1],pch=19,col="red", cex=6.0*coweeta.species.rel$ROPS)
+
+#add in the legend names and colors:
+legend.txt <- c("ACRU","QUAL","COFL","RHMA","ROPS")
+legend.col <- c("gray","lightgreen", "darkgreen","darkred","red")
 legend("topright",horiz=F,legend=legend.txt,text.col=legend.col,bty="n")
 box(lwd=2)
 
