@@ -178,32 +178,25 @@ box(lwd=2)
 
 #that's all folks
 
-# ggplot() +
-#   geom_text(data = species_scores, aes(x = NMDS1, y = NMDS2, label = species),
-#             alpha = 0.5, size = 10) +
-#   geom_point(data = coweeta.species.nms, aes(x = NMDS1, y = NMDS2, 
-#                                      color = aquaticSiteType), size = 3) +
-#   scale_color_manual(values = inferno(15)[c(3, 8, 11)],
-#                      name = "Aquatic System Type") +
-#   annotate(geom = "label", x = -1, y = 1.25, size = 10,
-#            label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
-#   theme_minimal() +
-#   theme(legend.position = "right",
-#         text = element_text(size = 24))
+################################################################################
 
-# species_all = c(colnames(coweeta.species.nms.df[3,-1]))
-# print(species_all)
-# class(species_all)
+# Eni's stuff
+
+coweeta.species.rel.subset = coweeta.species.rel %>% 
+  select(ACRU, LITU, PIRI, QURU, QUPR, RHMA, ROPS)
 
 coweeta.species.nms.df = as.data.frame(coweeta.species.nms) %>%
-  cbind(., coweeta.species.rel)
-  # mutate(species_max = max(coweeta.species.rel$ACRU:coweeta.species.rel$ROPS))
+  cbind(., coweeta.species.rel.subset)
+# mutate(species_max = max(coweeta.species.rel$ACRU:coweeta.species.rel$ROPS))
+
+coweeta.species.nms.wa.df = as.data.frame(coweeta.species.nms.wa) %>% 
+  filter(row.names(.) %in% c('ACRU', 'LITU', 'PIRI', 'QURU', 'QUPR', 'RHMA', 'ROPS'))
 
 # class(coweeta.species.nms.df$ACRU)
 
 highest_vals = c()
 highest_specs = c()
-  
+
 for (i in 1:nrow(coweeta.species.nms.df)) {
   values = coweeta.species.nms.df[i, -c(1,2)]
   # print(values)
@@ -212,37 +205,50 @@ for (i in 1:nrow(coweeta.species.nms.df)) {
   highest_vals = c(highest_vals, highest_val)
   # print(colnames(values))
   # highest_spec= names(values == highest_val)
-  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))]
+  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
   # highest_spec = lapply(apply(values, 2, function(x)which(x==highest_val)), names)
   # print(highest_spec)
   highest_specs = c(highest_specs, highest_spec)
 }
 
-print(highest_specs)
-  
+# print(highest_specs)
+
 coweeta.species.nms.df$highest_vals = highest_vals
 coweeta.species.nms.df$highest_specs = highest_specs
 
+# max(coweeta.species.nms.df)
+
 ggplot() +
-  # geom_text(data = species_scores, aes(x = NMDS1, y = NMDS2, label = species),
-  #           alpha = 0.5, size = 10) +
-  geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-             color = "blue", 
-             size = 6.0*coweeta.species.nms.df$"LITU") +
-  geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-             color = "green", 
-             size = 6.0*coweeta.species.nms.df$"ACRU") +
-  geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-             color = "red", 
-             size = 6.0*coweeta.species.nms.df$"PIRI") +
-
   
+  geom_point(data = coweeta.species.nms.df, 
+             aes(x = NMS2, y = NMS1, 
+                 color = highest_specs,
+                 size = highest_vals)) +
+  # color = "blue", 
+  # size = 6.0*coweeta.species.nms.df$"LITU") +
+  
+  geom_text(data = coweeta.species.nms.wa.df, 
+            aes(x = NMS2, 
+                y = NMS1, 
+                label = row.names(coweeta.species.nms.wa.df)),
+            alpha = 0.8, size = 3) +
+  
+  labs(color = "Species:", size = "Basal Area (UNIT):")
 
-  # scale_color_manual(values = inferno(15)[c(3, 8, 11)],
-  #                    name = "Aquatic System Type") +
-  # annotate(geom = "label", x = -1, y = 1.25, size = 10,
-  #          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
-  theme_minimal() +
+# geom_segment(mapping = )
+
+# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+#            color = "green", 
+#            size = 6.0*coweeta.species.nms.df$"ACRU") +
+# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+#            color = "red", 
+#            size = 6.0*coweeta.species.nms.df$"PIRI") +
+
+# scale_color_manual(values = inferno(15)[c(3, 8, 11)],
+#                    name = "Aquatic System Type") +
+# annotate(geom = "label", x = -1, y = 1.25, size = 10,
+#          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
+
+theme_minimal() +
   theme(legend.position = "right",
         text = element_text(size = 12))
-

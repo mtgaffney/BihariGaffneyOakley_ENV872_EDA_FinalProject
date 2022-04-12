@@ -40,18 +40,21 @@ coweeta.species.canopy <- coweeta.species %>%
   pivot_longer(!Plot, names_to = 'speciesCode', values_to = 'BasalArea')
 
 #If you want to do this for understory species as well........................
-# coweeta.species.understory <- coweeta.species %>% 
-#   select(Plot,AMAR, COFL:KALA, OXAR, RHMA) %>% 
+# coweeta.species.understory <- coweeta.species %>%
+#   select(Plot,AMAR, COFL:KALA, OXAR, RHMA) %>%
 #   pivot_longer(!Plot, names_to = 'speciesCode', values_to = 'BasalArea')
 
 #plot the mean basal area for each species across all plots to get sense of 
 #landscape level distributions
-plot2.0 <- ggplot(coweeta.species.canopy,
+plot.BA <- ggplot(coweeta.species.canopy,
                   aes(x =speciesCode, y=BasalArea, fill = speciesCode)) +
   stat_summary(fun = mean, geom = 'bar') +
-  labs(y = "Square Feet", x = 'Species Code',
-       title = 'Mean basal area for canopy species at Coweeta LTERS')
-plot2.0
+  labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
+       x = 'Species Code',
+       title = 'Mean basal area for canopy species at Coweeta LTERS',
+       fill = "Species Code") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+plot.BA
 
 #plot one species' (ACRU) basal area for each plot 
 #first subset just for desired species
@@ -59,18 +62,20 @@ coweeta.ACRU <- coweeta.species.canopy %>%
   filter(speciesCode == "ACRU")
 
 #then plot
-plot2 <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) + 
-  geom_vline(xintercept = mean(coweeta.ACRU$BasalArea), color = "red") +
+plot.ACRU <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) + 
   geom_area(aes(y=..count.., fill = speciesCode, group = speciesCode), 
             stat = 'bin') +
+  geom_vline(xintercept = mean(coweeta.ACRU$BasalArea), color = "black") +
   theme(legend.position = 'none') +
-  annotate(geom = 'text', x = 5.5, y = 10, label = paste(
+  annotate(geom = 'text', x = 7, y = 10, label = paste('mean = ', 
     round(
-    mean(coweeta.ACRU$BasalArea), digits = 3), 'ft^2')) +
+      mean(coweeta.ACRU$BasalArea), 
+      digits = 3), 
+    expression(ft^2))) +
   xlim(0,20) +
-  labs(y="Plot Count", x="Basal Area (ft^2)",
+  labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Frequency distribution of basal areas for plots at Coweeta LTRS")
-plot2
+plot.ACRU
 
 #check out correlations in the environmental variables; there will be a bunch of these
 names(coweeta.env)

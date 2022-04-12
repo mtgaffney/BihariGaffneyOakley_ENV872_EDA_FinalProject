@@ -223,7 +223,7 @@ ggplot() +
                 label = row.names(coweeta.species.nms.wa.df)),
             alpha = 0.8, size = 3) +
   
-  labs(color = "Species:", size = "Weight:")
+  labs(color = "Species:", size = "Basal Area (UNIT):")
   
   # geom_segment(mapping = )
   
