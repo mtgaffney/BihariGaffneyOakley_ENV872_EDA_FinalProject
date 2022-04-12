@@ -122,6 +122,7 @@ text(coweeta.species.nms.wa[,2:1], rownames(coweeta.species.nms.wa),cex=0.8, col
 #now, let's add in correlation vectors for the environmental variables; this is how we know what the axes mean
 #use the vector fitting function from the ecodist package for this
 coweeta.species.nms.vf <- vf(coweeta.species.nms[,2:1], coweeta.env.11[,-1], nperm=1000)
+print(coweeta.species.nms.vf)
 #now plot the vectors; note that we're only plotting the highly statistically significant vectors
 plot.vf(coweeta.species.nms.vf, pval=0.01, col="red", lwd=2, length=0.067)
 # (length specifies the size of the arrowheads, in inches, and it annoys R)
@@ -171,9 +172,15 @@ box(lwd=2)
 # print(species_all)
 # class(species_all)
 
+coweeta.species.rel.subset = coweeta.species.rel %>% 
+  select(ACRU, LITU, PIRI, QURU, QUPR, RHMA, ROPS)
+
 coweeta.species.nms.df = as.data.frame(coweeta.species.nms) %>%
-  cbind(., coweeta.species.rel)
+  cbind(., coweeta.species.rel.subset)
   # mutate(species_max = max(coweeta.species.rel$ACRU:coweeta.species.rel$ROPS))
+
+coweeta.species.nms.wa.df = as.data.frame(coweeta.species.nms.wa) %>% 
+  filter(row.names(.) %in% c('ACRU', 'LITU', 'PIRI', 'QURU', 'QUPR', 'RHMA', 'ROPS'))
 
 # class(coweeta.species.nms.df$ACRU)
 
@@ -188,36 +195,50 @@ for (i in 1:nrow(coweeta.species.nms.df)) {
   highest_vals = c(highest_vals, highest_val)
   # print(colnames(values))
   # highest_spec= names(values == highest_val)
-  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))]
+  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
   # highest_spec = lapply(apply(values, 2, function(x)which(x==highest_val)), names)
   # print(highest_spec)
   highest_specs = c(highest_specs, highest_spec)
 }
 
-print(highest_specs)
+# print(highest_specs)
   
 coweeta.species.nms.df$highest_vals = highest_vals
 coweeta.species.nms.df$highest_specs = highest_specs
 
-ggplot() +
-  # geom_text(data = species_scores, aes(x = NMDS1, y = NMDS2, label = species),
-  #           alpha = 0.5, size = 10) +
-  geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-             color = "blue", 
-             size = 6.0*coweeta.species.nms.df$"LITU") +
-  geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-             color = "green", 
-             size = 6.0*coweeta.species.nms.df$"ACRU") +
-  geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-             color = "red", 
-             size = 6.0*coweeta.species.nms.df$"PIRI") +
+# max(coweeta.species.nms.df)
 
+ggplot() +
+
+  geom_point(data = coweeta.species.nms.df, 
+             aes(x = NMS2, y = NMS1, 
+                 color = highest_specs,
+                 size = highest_vals)) +
+             # color = "blue", 
+             # size = 6.0*coweeta.species.nms.df$"LITU") +
   
+  geom_text(data = coweeta.species.nms.wa.df, 
+            aes(x = NMS2, 
+                y = NMS1, 
+                label = row.names(coweeta.species.nms.wa.df)),
+            alpha = 0.8, size = 3) +
+  
+  labs(color = "Species:", size = "Weight:")
+  
+  # geom_segment(mapping = )
+  
+  # geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+  #            color = "green", 
+  #            size = 6.0*coweeta.species.nms.df$"ACRU") +
+  # geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+  #            color = "red", 
+  #            size = 6.0*coweeta.species.nms.df$"PIRI") +
 
   # scale_color_manual(values = inferno(15)[c(3, 8, 11)],
   #                    name = "Aquatic System Type") +
   # annotate(geom = "label", x = -1, y = 1.25, size = 10,
   #          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
+
   theme_minimal() +
   theme(legend.position = "right",
         text = element_text(size = 12))
