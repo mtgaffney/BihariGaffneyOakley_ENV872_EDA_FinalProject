@@ -22,20 +22,63 @@ coweeta.sf <- coweeta.xy %>%
   st_as_sf(coords = c('UTME','UTMN'),
            crs=32617)
 #check out where this stuff shows up on the map
-mapView(coweeta.sf, col.regions = "darkgreen", map.types = "CartoDB.Positron", legend = FALSE)
+mapView(coweeta.sf, col.regions = "red", map.types = "Esri.WorldImagery", legend = FALSE)
 
 #epxlore the species data a little; try a random plot of some of the species (Acer Rubrum, Rhododendron maximum, Carya tomentosa) against elevation
 #set ggplot data source to null because we're using two different datasets
-ggplot(NULL, aes(x = coweeta.env$Elevation)) +
+plot1 <- ggplot(NULL, aes(x = coweeta.env$Elevation)) +
   geom_point(aes(y = coweeta.species$ACRU), color = "darkgreen") +
   geom_point(aes(y = coweeta.species$RHMA), color = "darkred") +
   geom_point(aes(y = coweeta.species$CATO), color = "darkblue") +
   labs(x = "Elevation", y = "Basal Area")
+plot1
+
+#display the distribution of basal areas by species
+#first pivot_longer & subset to canopy species
+coweeta.species.canopy <- coweeta.species %>% 
+  select(Plot:ACRU, BELE:CATO, LITU:NYSY, PIRI:QUVE, ROPS) %>% 
+  pivot_longer(!Plot, names_to = 'speciesCode', values_to = 'BasalArea')
+
+#If you want to do this for understory species as well........................
+# coweeta.species.understory <- coweeta.species %>% 
+#   select(Plot,AMAR, COFL:KALA, OXAR, RHMA) %>% 
+#   pivot_longer(!Plot, names_to = 'speciesCode', values_to = 'BasalArea')
+
+#plot the mean basal area for each species across all plots to get sense of 
+#landscape level distributions
+plot2.0 <- ggplot(coweeta.species.canopy,
+                  aes(x =speciesCode, y=BasalArea, fill = speciesCode)) +
+  stat_summary(fun = mean, geom = 'bar') +
+  labs(y = "Square Feet", x = 'Species Code',
+       title = 'Mean basal area for canopy species at Coweeta LTERS')
+plot2.0
+
+#plot one species' (ACRU) basal area for each plot 
+#first subset just for desired species
+coweeta.ACRU <- coweeta.species.canopy %>% 
+  filter(speciesCode == "ACRU")
+
+#then plot
+plot2 <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) + 
+  geom_vline(xintercept = mean(coweeta.ACRU$BasalArea), color = "red") +
+  geom_area(aes(y=..count.., fill = speciesCode, group = speciesCode), 
+            stat = 'bin') +
+  theme(legend.position = 'none') +
+  annotate(geom = 'text', x = 5.5, y = 10, label = paste(
+    round(
+    mean(coweeta.ACRU$BasalArea), digits = 3), 'ft^2')) +
+  xlim(0,20) +
+  labs(y="Plot Count", x="Basal Area (ft^2)",
+       title = "Frequency distribution of basal areas for plots at Coweeta LTRS")
+plot2
 
 #check out correlations in the environmental variables; there will be a bunch of these
 names(coweeta.env)
-coweeta.env.cor <- cor(coweeta.env[,-1])
+coweeta.env.cor <- data.frame(cor(coweeta.env[,-1]))
 print(coweeta.env.cor,digits=3)
+#save correlations for presentation
+write.csv(coweeta.env.cor, './Data/Outputs/CoweetaVarCors.csv', row.names = TRUE)
+
 #check a correaltion directly betwene two variables.
 cor.test(coweeta.env$Acidity, coweeta.env$C)
 
