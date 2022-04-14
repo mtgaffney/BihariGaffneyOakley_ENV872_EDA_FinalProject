@@ -1,8 +1,12 @@
-#Coweeta -- Nonmetric Multidimensional Scaling
+install.packages("installr")
+
+library(installr)
+
+updateR()#Coweeta -- Nonmetric Multidimensional Scaling
 #Enikoe Bihari, Michael Gaffney, Cal Oakley
 
 #MAKE SURE TO RUN COWEETA_EDA.R BEFORE RUNNING THIS SCRIPT
-# install.packages("ggvegan")
+install.packages("ggvegan")
 # install.packages("ggpubr")
 library(vegan)
 library(ggplot2)
