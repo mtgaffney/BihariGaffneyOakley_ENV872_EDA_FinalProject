@@ -159,40 +159,61 @@ box(lwd=2)
 
 #that's all folks
 
-# ggplot() +
-#   geom_text(data = species_scores, aes(x = NMDS1, y = NMDS2, label = species),
-#             alpha = 0.5, size = 10) +
-#   geom_point(data = coweeta.species.nms, aes(x = NMDS1, y = NMDS2, 
-#                                      color = aquaticSiteType), size = 3) +
-#   scale_color_manual(values = inferno(15)[c(3, 8, 11)],
-#                      name = "Aquatic System Type") +
-#   annotate(geom = "label", x = -1, y = 1.25, size = 10,
-#            label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
-#   theme_minimal() +
-#   theme(legend.position = "right",
-#         text = element_text(size = 24))
+################################################################################
 
-# species_all = c(colnames(coweeta.species.nms.df[3,-1]))
-# print(species_all)
-# class(species_all)
+# Eni's stuff
 
-coweeta.species.rel.subset = coweeta.species.rel %>% 
-  select(ACRU, LITU, PIRI, QURU, QUPR, RHMA, ROPS)
+# example code
 
-coweeta.species.nms.df = as.data.frame(coweeta.species.nms) %>%
-  cbind(., coweeta.species.rel.subset)
-  # mutate(species_max = max(coweeta.species.rel$ACRU:coweeta.species.rel$ROPS))
+# spp.scrs <- as.data.frame(scores(vf, display = "vectors"))
+# spp.scrs <- cbind(spp.scrs, Species = rownames(spp.scrs))
+# 
+# p <- ggplot(scrs) +
+#   geom_point(mapping = aes(x = NMDS1, y = NMDS2, colour = Group)) +
+#   coord_fixed() + ## need aspect ratio of 1!
+#   geom_segment(data = spp.scrs,
+#                aes(x = 0, xend = NMDS1, y = 0, yend = NMDS2),
+#                arrow = arrow(length = unit(0.25, "cm")), colour = "grey") +
+#   geom_text(data = spp.scrs, aes(x = NMDS1, y = NMDS2, label = Species),
+#             size = 3)
 
-coweeta.species.nms.wa.df = as.data.frame(coweeta.species.nms.wa) %>% 
-  filter(row.names(.) %in% c('ACRU', 'LITU', 'PIRI', 'QURU', 'QUPR', 'RHMA', 'ROPS'))
+# make the environmental vector into a data frame with only the statistically significant vectors
+coweeta.species.nms.vf
 
-# class(coweeta.species.nms.df$ACRU)
+NMS1 = coweeta.species.nms.vf[,2]
+NMS2 = coweeta.species.nms.vf[,1]
+pval = coweeta.species.nms.vf[,4]
+r2 = coweeta.species.nms.vf[,3]
 
+coweeta.species.nms.vf.df = data.frame(NMS1 = NMS1, NMS2 = NMS2, p.val = pval, r.2 = r2) %>% 
+  mutate(env.var = rownames(.), NMS1.scaled = NMS1 * r2, NMS2.scaled = NMS2 * r2) %>% 
+  filter(p.val <= 0.01) 
+coweeta.species.nms.vf.df
+
+########################### SOIL MOISTURE GRADIENT ########################### 
+
+# get species labels, positioned according to their weighted average vectors
+
+# get just the important species from the weighted average dataset (these will be labelled)
+coweeta.species.nms.wa.df.sm = as.data.frame(coweeta.species.nms.wa) %>% 
+  filter(row.names(.) %in% c('ACRU', 'QUCO', 'KALA', 'PIRI', 'BELE', 'LITU'))
+
+# get dominant trees + their BA for each plot (for nicer points on the graph)
+
+# get just the important species from the relativized species data set
+coweeta.species.rel.subset.sm = coweeta.species.rel %>% 
+  select(ACRU, QUCO, KALA, PIRI, BELE, LITU)
+
+# make nms result into a dataframe and bind the relativized dataset onto it
+coweeta.species.nms.df.sm = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel.subset.sm)
+
+# calculate the species with the highest BA in each plot 
 highest_vals = c()
 highest_specs = c()
-  
-for (i in 1:nrow(coweeta.species.nms.df)) {
-  values = coweeta.species.nms.df[i, -c(1,2)]
+
+for (i in 1:nrow(coweeta.species.nms.df.sm)) { 
+  values = coweeta.species.nms.df.sm[i, -c(1,2)]
   # print(values)
   # print(colnames(values))
   highest_val = apply(values[,-1], 1, max)
@@ -205,45 +226,194 @@ for (i in 1:nrow(coweeta.species.nms.df)) {
   highest_specs = c(highest_specs, highest_spec)
 }
 
-# print(highest_specs)
-  
-coweeta.species.nms.df$highest_vals = highest_vals
-coweeta.species.nms.df$highest_specs = highest_specs
+# add to dataframe 
+coweeta.species.nms.df.sm$highest_vals = highest_vals
+coweeta.species.nms.df.sm$highest_specs = highest_specs
 
-# max(coweeta.species.nms.df)
+# graph everything in ggplot
 
 ggplot() +
-
-  geom_point(data = coweeta.species.nms.df, 
+  
+  # lines to show origin
+  geom_vline(xintercept = 0, color = "black", linetype = 2) +
+  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  
+  # sites colored for dominant tree species + weighted for BA
+  geom_point(data = coweeta.species.nms.df.sm, 
              aes(x = NMS2, y = NMS1, 
                  color = highest_specs,
                  size = highest_vals)) +
-             # color = "blue", 
-             # size = 6.0*coweeta.species.nms.df$"LITU") +
   
-  geom_text(data = coweeta.species.nms.wa.df, 
+  # species name labels positioned according to weighted average vectors
+  geom_text(data = coweeta.species.nms.wa.df.sm, 
             aes(x = NMS2, 
                 y = NMS1, 
-                label = row.names(coweeta.species.nms.wa.df)),
+                label = row.names(coweeta.species.nms.wa.df.sm)),
             alpha = 0.8, size = 3) +
   
-  labs(color = "Species:", size = "Basal Area (UNIT):")
+  # # environment vectors
+  # geom_segment(data = coweeta.species.nms.vf.df,
+  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+  #              arrow = arrow(length = unit(.5, "cm")), 
+  #              colour = "black",
+  #              alpha = 0.2,
+  #              size = 2) +
   
-  # geom_segment(mapping = )
-  
-  # geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-  #            color = "green", 
-  #            size = 6.0*coweeta.species.nms.df$"ACRU") +
-  # geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-  #            color = "red", 
-  #            size = 6.0*coweeta.species.nms.df$"PIRI") +
+  # # environment vector labels 
+  # geom_text(data = coweeta.species.nms.vf.df, 
+#           aes(x = NMS2.scaled, 
+#               y = NMS1.scaled, 
+#               label = row.names(coweeta.species.nms.vf.df)),
+#           alpha = 0.8, 
+#           size = 3) +
 
-  # scale_color_manual(values = inferno(15)[c(3, 8, 11)],
-  #                    name = "Aquatic System Type") +
-  # annotate(geom = "label", x = -1, y = 1.25, size = 10,
-  #          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
-
-  theme_minimal() +
+# other fomratting stuff
+labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+  xlim(-.8,.8) +
+  ylim(-.8,.8) +
+  theme_gray() +
   theme(legend.position = "right",
         text = element_text(size = 12))
 
+########################### ELEVATION GRADIENT ########################### 
+
+# get species labels, positioned according to their weighted average vectors
+
+# get just the important species from the weighted average dataset (these will be labelled)
+coweeta.species.nms.wa.df.e = as.data.frame(coweeta.species.nms.wa) %>% 
+  filter(row.names(.) %in% c("ACRU","QUAL","COFL","RHMA","ROPS"))
+
+# get dominant trees + their BA for each plot (for nicer points on the graph)
+
+# get just the important species from the relativized species data set
+coweeta.species.rel.subset.e = coweeta.species.rel %>% 
+  select(ACRU,QUAL,COFL,RHMA,ROPS)
+
+# make nms result into a dataframe and bind the relativized dataset onto it
+coweeta.species.nms.df.e = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel.subset.e)
+
+# calculate the species with the highest BA in each plot 
+highest_vals = c()
+highest_specs = c()
+
+for (i in 1:nrow(coweeta.species.nms.df.e)) { 
+  values = coweeta.species.nms.df.e[i, -c(1,2)]
+  # print(values)
+  # print(colnames(values))
+  highest_val = apply(values[,-1], 1, max)
+  highest_vals = c(highest_vals, highest_val)
+  # print(colnames(values))
+  # highest_spec= names(values == highest_val)
+  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
+  # highest_spec = lapply(apply(values, 2, function(x)which(x==highest_val)), names)
+  # print(highest_spec)
+  highest_specs = c(highest_specs, highest_spec)
+}
+
+# add to dataframe 
+coweeta.species.nms.df.e$highest_vals = highest_vals
+coweeta.species.nms.df.e$highest_specs = highest_specs
+
+# graph everything in ggplot
+
+ggplot() +
+  
+  # lines to show origin
+  geom_vline(xintercept = 0, color = "black", linetype = 2) +
+  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  
+  # sites colored for dominant tree species + weighted for BA
+  geom_point(data = coweeta.species.nms.df.e, 
+             aes(x = NMS2, y = NMS1, 
+                 color = highest_specs,
+                 size = highest_vals)) +
+  
+  # species name labels positioned according to weighted average vectors
+  geom_text(data = coweeta.species.nms.wa.df.e, 
+            aes(x = NMS2, 
+                y = NMS1, 
+                label = row.names(coweeta.species.nms.wa.df.e)),
+            alpha = 0.8, size = 3) +
+  
+  # # environment vectors
+  # geom_segment(data = coweeta.species.nms.vf.df,
+  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+  #              arrow = arrow(length = unit(.5, "cm")), 
+  #              colour = "black",
+  #              alpha = 0.2,
+  #              size = 2) +
+  
+  # # environment vector labels 
+  # geom_text(data = coweeta.species.nms.vf.df, 
+#           aes(x = NMS2.scaled, 
+#               y = NMS1.scaled, 
+#               label = row.names(coweeta.species.nms.vf.df)),
+#           alpha = 0.8, 
+#           size = 3) +
+
+# other fomratting stuff
+labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+  xlim(-.8,.8) +
+  ylim(-.8,.8) +
+  theme_gray() +
+  theme(legend.position = "right",
+        text = element_text(size = 12))
+
+########################### ENVIRONMENT VECTORS ########################### 
+
+coweeta.species.nms.df.full = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel)
+
+ggplot() +
+  
+  # lines to show origin
+  geom_vline(xintercept = 0, color = "black", linetype = 2) +
+  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  
+  # sites colored for dominant tree species + weighted for BA
+  geom_point(data = coweeta.species.nms.df.full, 
+             aes(x = NMS2, y = NMS1)) +
+  
+  # # species name labels positioned according to weighted average vectors
+  # geom_text(data = coweeta.species.nms.wa.df, 
+  #           aes(x = NMS2, 
+  #               y = NMS1, 
+  #               label = row.names(coweeta.species.nms.wa.df)),
+  #           alpha = 0.8, size = 3) +
+  
+  # environment vectors
+  geom_segment(data = coweeta.species.nms.vf.df,
+               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled, colour = env.var),
+               arrow = arrow(length = unit(.5, "cm")),
+               alpha = 0.8,
+               size = 2) +
+  
+  # environment vector labels
+  geom_text(data = coweeta.species.nms.vf.df,
+            aes(x = NMS2.scaled,
+                y = NMS1.scaled,
+                label = row.names(coweeta.species.nms.vf.df)),
+            alpha = 1,
+            size = 3) +
+  
+  # other fomratting stuff
+  labs(color = "Environmental Variable:") +
+  xlim(-.8,.8) +
+  ylim(-.8,.8) +
+  theme_gray() +
+  theme(legend.position = "right",
+        text = element_text(size = 12))
+
+# example code
+
+# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+#            color = "green", 
+#            size = 6.0*coweeta.species.nms.df$"ACRU") +
+# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+#            color = "red", 
+#            size = 6.0*coweeta.species.nms.df$"PIRI") +
+# scale_color_manual(values = inferno(15)[c(3, 8, 11)],
+#                    name = "Aquatic System Type") +
+# annotate(geom = "label", x = -1, y = 1.25, size = 10,
+#          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
