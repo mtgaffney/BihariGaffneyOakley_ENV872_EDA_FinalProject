@@ -74,7 +74,8 @@ coweeta.ACRU <- coweeta.species.canopy %>%
 #then plot
 plot.ACRU <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) + 
   geom_area(aes(y=..count.., fill = speciesCode, group = speciesCode), 
-            stat = 'bin') +
+            stat = 'bin',
+            binwidth = 3) +
   geom_vline(xintercept = mean(coweeta.ACRU$BasalArea), color = "black") +
   theme(legend.position = 'none') +
   annotate(geom = 'text', x = 7, y = 10, label = paste('mean = ', 
@@ -82,7 +83,7 @@ plot.ACRU <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) +
       mean(coweeta.ACRU$BasalArea), 
       digits = 3), 
     expression(ft^2))) +
-  # xlim(0,20) +
+  xlim(0,45) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Frequency distribution of basal areas for plots at Coweeta LTRS")
 plot.ACRU
@@ -93,7 +94,8 @@ coweeta.QUPR <- coweeta.species.canopy %>%
 
 plot.QUPR <-  ggplot(coweeta.QUPR, aes(x=BasalArea)) + 
   geom_area(aes(y=..count.., fill = speciesCode, group = speciesCode), 
-            stat = 'bin') +
+            stat = 'bin',
+            binwidth = 3) +
   geom_vline(xintercept = mean(coweeta.QUPR$BasalArea), color = "black") +
   theme(legend.position = 'none') +
   annotate(geom = 'text', x = 4.5, y = 15, label = paste('mean = ', 
@@ -101,7 +103,7 @@ plot.QUPR <-  ggplot(coweeta.QUPR, aes(x=BasalArea)) +
                                                          mean(coweeta.QUPR$BasalArea), 
                                                          digits = 3), 
                                                        expression(ft^2))) +
-  # xlim(0,20) +
+  xlim(0,45) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Frequency distribution of basal areas for plots at Coweeta LTRS")
 plot.QUPR
@@ -112,7 +114,8 @@ coweeta.QURU <- coweeta.species.canopy %>%
 
 plot.QURU <-  ggplot(coweeta.QURU, aes(x=BasalArea)) + 
   geom_area(aes(y=..count.., fill = speciesCode, group = speciesCode), 
-            stat = 'bin') +
+            stat = 'bin',
+            binwidth = 3) +
   geom_vline(xintercept = mean(coweeta.QURU$BasalArea), color = "black") +
   theme(legend.position = 'none') +
   annotate(geom = 'text', x = 6, y = 30, label = paste('mean = ', 
@@ -120,7 +123,7 @@ plot.QURU <-  ggplot(coweeta.QURU, aes(x=BasalArea)) +
                                                            mean(coweeta.QURU$BasalArea), 
                                                            digits = 3), 
                                                          expression(ft^2))) +
-  # xlim(0,20) +
+  xlim(0,45) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Frequency distribution of basal areas for plots at Coweeta LTRS")
 plot.QURU
@@ -134,5 +137,3 @@ write.csv(coweeta.env.cor, './Data/Outputs/CoweetaVarCors.csv', row.names = TRUE
 
 #check a correaltion directly betwene two variables.
 cor.test(coweeta.env$Acidity, coweeta.env$C)
-
-
