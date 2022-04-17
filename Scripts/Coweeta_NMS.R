@@ -186,36 +186,15 @@ box(lwd=2)
 #that's all folks
 
 ################################################################################
+################################################################################
+################################################################################
 
-# Eni's stuff
+# ggplot stuff (from Eni)
 
-# example code
-
-# spp.scrs <- as.data.frame(scores(vf, display = "vectors"))
-# spp.scrs <- cbind(spp.scrs, Species = rownames(spp.scrs))
-# 
-# p <- ggplot(scrs) +
-#   geom_point(mapping = aes(x = NMDS1, y = NMDS2, colour = Group)) +
-#   coord_fixed() + ## need aspect ratio of 1!
-#   geom_segment(data = spp.scrs,
-#                aes(x = 0, xend = NMDS1, y = 0, yend = NMDS2),
-#                arrow = arrow(length = unit(0.25, "cm")), colour = "grey") +
-#   geom_text(data = spp.scrs, aes(x = NMDS1, y = NMDS2, label = Species),
-#             size = 3)
-
-# make the environmental vector into a data frame with only the statistically significant vectors
-coweeta.species.nms.vf
-# class(coweeta.species.nms.vf)
-
-NMS1 = coweeta.species.nms.vf[,2]
-NMS2 = coweeta.species.nms.vf[,1]
-pval = coweeta.species.nms.vf[,4]
-r2 = coweeta.species.nms.vf[,3]
-
-coweeta.species.nms.vf.df = data.frame(NMS1 = NMS1, NMS2 = NMS2, p.val = pval, r.2 = r2) %>% 
-  mutate(env.var = rownames(.), NMS1.scaled = NMS1 * r2, NMS2.scaled = NMS2 * r2) %>% 
-  filter(p.val <= 0.01) 
-coweeta.species.nms.vf.df
+# create one single dataframe with the species values and the NMS values for every plot
+coweeta.species.nms.df.full = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel)
+coweeta.species.nms.df.full
 
 ########################### SOIL MOISTURE GRADIENT ########################### 
 
@@ -235,39 +214,49 @@ coweeta.species.rel.subset.sm = coweeta.species.rel %>%
 coweeta.species.nms.df.sm = as.data.frame(coweeta.species.nms) %>%
   cbind(., coweeta.species.rel.subset.sm)
 
-# calculate the species with the highest BA in each plot 
+# calculate the species with the highest BA in each plot (for better visuals)
+
 highest_vals = c()
 highest_specs = c()
 
+# make new vectors for the highest BA species in each plot
 for (i in 1:nrow(coweeta.species.nms.df.sm)) { 
   values = coweeta.species.nms.df.sm[i, -c(1,2)]
-  # print(values)
-  # print(colnames(values))
   highest_val = apply(values[,-1], 1, max)
   highest_vals = c(highest_vals, highest_val)
-  # print(colnames(values))
-  # highest_spec= names(values == highest_val)
   highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
-  # highest_spec = lapply(apply(values, 2, function(x)which(x==highest_val)), names)
-  # print(highest_spec)
   highest_specs = c(highest_specs, highest_spec)
 }
 
-# add to dataframe 
+# add vectors to dataframe 
 coweeta.species.nms.df.sm$highest_vals = highest_vals
 coweeta.species.nms.df.sm$highest_specs = highest_specs
 
 # graph everything in ggplot
-
-ggplot() +
+soil_mositure.plot = 
+  
+  ggplot() +
   
   # lines to show origin
-  geom_vline(xintercept = 0, color = "black", linetype = 2) +
-  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  geom_vline(xintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  geom_hline(yintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  
+  # environment vectors
+  geom_segment(data = coweeta.species.nms.vf.df,
+               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+               arrow = arrow(length = unit(.5, "cm")),
+               color = "darkgrey",
+               alpha = .7,
+               size = 1) +
   
   # sites colored for dominant tree species + weighted for BA
   geom_point(data = coweeta.species.nms.df.sm, 
-             aes(x = NMS2, y = NMS1, 
+             aes(x = NMS2, 
+                 y = NMS1, 
                  color = highest_specs,
                  size = highest_vals)) +
   
@@ -276,31 +265,22 @@ ggplot() +
             aes(x = NMS2, 
                 y = NMS1, 
                 label = row.names(coweeta.species.nms.wa.df.sm)),
-            alpha = 0.8, size = 3) +
-  
-  # # environment vectors
-  # geom_segment(data = coweeta.species.nms.vf.df,
-  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
-  #              arrow = arrow(length = unit(.5, "cm")), 
-  #              colour = "black",
-  #              alpha = 0.2,
-  #              size = 2) +
-  
-  # # environment vector labels 
-  # geom_text(data = coweeta.species.nms.vf.df, 
-#           aes(x = NMS2.scaled, 
-#               y = NMS1.scaled, 
-#               label = row.names(coweeta.species.nms.vf.df)),
-#           alpha = 0.8, 
-#           size = 3) +
+            alpha = 1, 
+            size = 4) +
 
-# other fomratting stuff
-labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
-  xlim(-.8,.8) +
-  ylim(-.8,.8) +
-  theme_gray() +
-  theme(legend.position = "right",
-        text = element_text(size = 12))
+  # other fomratting stuff
+  labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+    # xlim(-.8,.8) +
+    # ylim(-.8,.8) +
+    theme_gray() +
+    theme(legend.position = "right",
+          text = element_text(size = 12)) +
+  scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
+  scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
+  xlab("NMS2") +
+  ylab("NMS1")
+
+print(soil_mositure.plot)
 
 ########################### ELEVATION GRADIENT ########################### 
 
@@ -320,21 +300,16 @@ coweeta.species.rel.subset.e = coweeta.species.rel %>%
 coweeta.species.nms.df.e = as.data.frame(coweeta.species.nms) %>%
   cbind(., coweeta.species.rel.subset.e)
 
-# calculate the species with the highest BA in each plot 
+# calculate the species with the highest BA in each plot
+
 highest_vals = c()
 highest_specs = c()
 
 for (i in 1:nrow(coweeta.species.nms.df.e)) { 
   values = coweeta.species.nms.df.e[i, -c(1,2)]
-  # print(values)
-  # print(colnames(values))
   highest_val = apply(values[,-1], 1, max)
   highest_vals = c(highest_vals, highest_val)
-  # print(colnames(values))
-  # highest_spec= names(values == highest_val)
   highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
-  # highest_spec = lapply(apply(values, 2, function(x)which(x==highest_val)), names)
-  # print(highest_spec)
   highest_specs = c(highest_specs, highest_spec)
 }
 
@@ -344,15 +319,30 @@ coweeta.species.nms.df.e$highest_specs = highest_specs
 
 # graph everything in ggplot
 
-ggplot() +
+elevation.plot = 
+  
+  ggplot() +
   
   # lines to show origin
-  geom_vline(xintercept = 0, color = "black", linetype = 2) +
-  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  geom_vline(xintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  geom_hline(yintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  
+  # environment vectors
+  geom_segment(data = coweeta.species.nms.vf.df,
+               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+               arrow = arrow(length = unit(.5, "cm")),
+               color = "darkgrey",
+               alpha = .7,
+               size = 1) +
   
   # sites colored for dominant tree species + weighted for BA
   geom_point(data = coweeta.species.nms.df.e, 
-             aes(x = NMS2, y = NMS1, 
+             aes(x = NMS2, 
+                 y = NMS1, 
                  color = highest_specs,
                  size = highest_vals)) +
   
@@ -361,46 +351,76 @@ ggplot() +
             aes(x = NMS2, 
                 y = NMS1, 
                 label = row.names(coweeta.species.nms.wa.df.e)),
-            alpha = 0.8, size = 3) +
-  
-  # # environment vectors
-  # geom_segment(data = coweeta.species.nms.vf.df,
-  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
-  #              arrow = arrow(length = unit(.5, "cm")),
-  #              colour = "black",
-  #              alpha = 0.2,
-  #              size = 2) +
-  
-  # # environment vector labels 
-  # geom_text(data = coweeta.species.nms.vf.df, 
-#           aes(x = NMS2.scaled, 
-#               y = NMS1.scaled, 
-#               label = row.names(coweeta.species.nms.vf.df)),
-#           alpha = 0.8, 
-#           size = 3) +
+            alpha = 1, 
+            size = 4) +
 
-# other fomratting stuff
-labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
-  xlim(-.8,.8) +
-  ylim(-.8,.8) +
-  theme_gray() +
-  theme(legend.position = "right",
-        text = element_text(size = 12))
+  # other fomratting stuff
+  labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+    # xlim(-.8,.8) +
+    # ylim(-.8,.8) +
+    theme_gray() +
+    theme(legend.position = "right",
+          text = element_text(size = 12)) +
+  scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
+  scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
+  xlab("NMS2") +
+  ylab("NMS1") +
+  # scale_color_manual(values = c('#6B8E23',
+  #                               'lightsalmon',
+  #                               'seagreen',
+  #                               '#FBDB0C',
+  #                               '#C0FF3E'))
+
+print(elevation.plot)
+
+# '#C0FF3E',
+# '#6B8E23',
+# 'lightsalmon',
+# "lightsalmon3",
+# '#FBDB0C',
+# "#CDAD00",
+# 'seagreen1',
+# 'seagreen'
 
 ########################### ENVIRONMENT VECTORS ########################### 
 
-coweeta.species.nms.df.full = as.data.frame(coweeta.species.nms) %>%
-  cbind(., coweeta.species.rel)
+# make the environmental vector into a data frame with only the statistically significant vectors
 
-ggplot() +
+# take a look at the vector data
+coweeta.species.nms.vf
+
+# extract each column
+NMS1 = coweeta.species.nms.vf[,2]
+NMS2 = coweeta.species.nms.vf[,1]
+pval = coweeta.species.nms.vf[,4]
+r2 = coweeta.species.nms.vf[,3]
+
+# put all of these together into a data frame, scale vector directions with the magnitudes
+coweeta.species.nms.vf.df = data.frame(NMS1 = NMS1, NMS2 = NMS2, p.val = pval, r.2 = r2) %>% 
+  mutate(env.var = rownames(.), NMS1.scaled = NMS1 * r2, NMS2.scaled = NMS2 * r2) %>% 
+  filter(p.val <= 0.01) %>% 
+  mutate(env.var.tidy = c("Elevation", "Slope", "Aspect", "pH", "Ca", "K", "C", "C:N", "Clay"))
+coweeta.species.nms.vf.df
+
+env_vectors.plot = 
+  
+  ggplot() +
   
   # lines to show origin
-  geom_vline(xintercept = 0, color = "black", linetype = 2) +
-  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  geom_vline(xintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  geom_hline(yintercept = 0, 
+             color = "black", 
+             linetype = 2) +
   
   # sites colored for dominant tree species + weighted for BA
   geom_point(data = coweeta.species.nms.df.full, 
-             aes(x = NMS2, y = NMS1)) +
+             aes(x = NMS2, 
+                 y = NMS1),
+             color = "darkgrey",
+             alpha = 1,
+             size = 2) +
   
   # # species name labels positioned according to weighted average vectors
   # geom_text(data = coweeta.species.nms.wa.df, 
@@ -411,36 +431,33 @@ ggplot() +
   
   # environment vectors
   geom_segment(data = coweeta.species.nms.vf.df,
-               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled, colour = env.var),
+               aes(x = 0, 
+                   xend = NMS2.scaled, 
+                   y = 0, 
+                   yend = NMS1.scaled, 
+                   colour = env.var.tidy),
                arrow = arrow(length = unit(.5, "cm")),
-               alpha = 0.8,
-               size = 2) +
+               alpha = 0.7,
+               size = 1.5) +
   
   # environment vector labels
   geom_text(data = coweeta.species.nms.vf.df,
             aes(x = NMS2.scaled,
                 y = NMS1.scaled,
-                label = row.names(coweeta.species.nms.vf.df)),
+                label = env.var.tidy),
             alpha = 1,
-            size = 3) +
+            size = 4) +
   
   # other fomratting stuff
-  labs(color = "Environmental Variable:") +
-  xlim(-.8,.8) +
-  ylim(-.8,.8) +
-  theme_gray() +
+  labs(colour = "Environmental Variable:") +
+  # xlim(-.8,.8) +
+  # ylim(-.8,.8) +
+  theme_grey() +
   theme(legend.position = "right",
-        text = element_text(size = 12))
+        text = element_text(size = 12)) +
+  scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
+  scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
+  xlab("NMS2") +
+  ylab("NMS1")
 
-# example code
-
-# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-#            color = "green", 
-#            size = 6.0*coweeta.species.nms.df$"ACRU") +
-# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-#            color = "red", 
-#            size = 6.0*coweeta.species.nms.df$"PIRI") +
-# scale_color_manual(values = inferno(15)[c(3, 8, 11)],
-#                    name = "Aquatic System Type") +
-# annotate(geom = "label", x = -1, y = 1.25, size = 10,
-#          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
+print(env_vectors.plot)
