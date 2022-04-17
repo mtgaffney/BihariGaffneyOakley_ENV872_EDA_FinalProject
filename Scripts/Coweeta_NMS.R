@@ -2,11 +2,11 @@
 #Enikoe Bihari, Michael Gaffney, Cal Oakley
 
 #MAKE SURE TO RUN COWEETA_EDA.R BEFORE RUNNING THIS SCRIPT
-install.packages("ggvegan")
+# install.packages("ggvegan")
 # install.packages("ggpubr")
 library(vegan)
 library(ggplot2)
-library(ggvegan)
+# library(ggvegan)
 library(ggpubr)
 library(tidyverse)
 library(lubridate)
@@ -205,6 +205,7 @@ box(lwd=2)
 
 # make the environmental vector into a data frame with only the statistically significant vectors
 coweeta.species.nms.vf
+# class(coweeta.species.nms.vf)
 
 NMS1 = coweeta.species.nms.vf[,2]
 NMS2 = coweeta.species.nms.vf[,1]
@@ -365,7 +366,7 @@ ggplot() +
   # # environment vectors
   # geom_segment(data = coweeta.species.nms.vf.df,
   #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
-  #              arrow = arrow(length = unit(.5, "cm")), 
+  #              arrow = arrow(length = unit(.5, "cm")),
   #              colour = "black",
   #              alpha = 0.2,
   #              size = 2) +

@@ -24,14 +24,14 @@ coweeta.sf <- coweeta.xy %>%
 #check out where this stuff shows up on the map
 mapView(coweeta.sf, col.regions = "red", map.types = "Esri.WorldImagery", legend = FALSE)
 
-#epxlore the species data a little; try a random plot of some of the species (Acer Rubrum, Rhododendron maximum, Carya tomentosa) against elevation
-#set ggplot data source to null because we're using two different datasets
-plot1 <- ggplot(NULL, aes(x = coweeta.env$Elevation)) +
-  geom_point(aes(y = coweeta.species$ACRU), color = "darkgreen") +
-  geom_point(aes(y = coweeta.species$RHMA), color = "darkred") +
-  geom_point(aes(y = coweeta.species$CATO), color = "darkblue") +
-  labs(x = "Elevation", y = "Basal Area")
-plot1
+# #epxlore the species data a little; try a random plot of some of the species (Acer Rubrum, Rhododendron maximum, Carya tomentosa) against elevation
+# #set ggplot data source to null because we're using two different datasets
+# plot1 <- ggplot(NULL, aes(x = coweeta.env$Elevation)) +
+#   geom_point(aes(y = coweeta.species$ACRU), color = "darkgreen") +
+#   geom_point(aes(y = coweeta.species$RHMA), color = "darkred") +
+#   geom_point(aes(y = coweeta.species$CATO), color = "darkblue") +
+#   labs(x = "Elevation", y = "Basal Area")
+# plot1
 
 #display the distribution of basal areas by species
 #first pivot_longer & subset to canopy species
@@ -46,15 +46,15 @@ coweeta.species.canopy <- coweeta.species %>%
 
 #plot the mean basal area for each species across all plots to get sense of 
 #landscape level distributions
-plot.BA.sum <- ggplot(coweeta.species.canopy,
-                  aes(x =speciesCode, y=BasalArea, fill = speciesCode)) +
-  stat_summary(fun = sum, geom = 'bar') +
-  labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
-       x = 'Species Code',
-       title = 'Mean basal area for canopy species at Coweeta LTERS',
-       fill = "Species Code") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-plot.BA.sum
+# plot.BA.sum <- ggplot(coweeta.species.canopy,
+#                   aes(x =speciesCode, y=BasalArea, fill = speciesCode)) +
+#   stat_summary(fun = sum, geom = 'bar') +
+#   labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
+#        x = 'Species Code',
+#        title = 'Mean basal area for canopy species at Coweeta LTERS',
+#        fill = "Species Code") +
+#   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+# plot.BA.sum
 
 plot.BA.mean <- ggplot(coweeta.species.canopy,
                   aes(x =speciesCode, y=BasalArea, fill = speciesCode)) +
@@ -71,6 +71,10 @@ plot.BA.mean
 coweeta.ACRU <- coweeta.species.canopy %>% 
   filter(speciesCode == "ACRU")
 
+mean.ACRU = as.character(round(mean(coweeta.ACRU$BasalArea), digits = 3))
+class(mean.ACRU)
+mean.ACRU
+
 #then plot
 plot.ACRU <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) + 
   geom_area(aes(y=..count.., fill = speciesCode, group = speciesCode), 
@@ -78,11 +82,7 @@ plot.ACRU <-  ggplot(coweeta.ACRU, aes(x=BasalArea)) +
             binwidth = 3) +
   geom_vline(xintercept = mean(coweeta.ACRU$BasalArea), color = "black") +
   theme(legend.position = 'none') +
-  annotate(geom = 'text', x = 7, y = 10, label = paste('mean = ', 
-    round(
-      mean(coweeta.ACRU$BasalArea), 
-      digits = 3), 
-    expression(ft^2))) +
+  annotate(geom = 'text', x = 7, y = 10, label = expression(paste("mean = ", 4.442, " ft"^2))) +
   xlim(0,45) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Frequency distribution of basal areas for plots at Coweeta LTRS")
