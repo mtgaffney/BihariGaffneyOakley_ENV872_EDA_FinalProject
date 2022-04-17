@@ -143,3 +143,6 @@ write.csv(coweeta.env.cor, './Data/Outputs/CoweetaVarCors.csv', row.names = TRUE
 #check a correaltion directly betwene two variables.
 cor.test(coweeta.env$Acidity, coweeta.env$C)
 
+
+
+

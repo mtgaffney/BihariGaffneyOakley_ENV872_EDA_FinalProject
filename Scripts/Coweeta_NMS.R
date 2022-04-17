@@ -284,22 +284,22 @@ ggplot() +
   #              colour = "black",
   #              alpha = 0.2,
   #              size = 2) +
-
+  
   # # environment vector labels 
   # geom_text(data = coweeta.species.nms.vf.df, 
-  #           aes(x = NMS2.scaled, 
-  #               y = NMS1.scaled, 
-  #               label = row.names(coweeta.species.nms.vf.df)),
-  #           alpha = 0.8, 
-  #           size = 3) +
-  
-  # other fomratting stuff
-  labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+#           aes(x = NMS2.scaled, 
+#               y = NMS1.scaled, 
+#               label = row.names(coweeta.species.nms.vf.df)),
+#           alpha = 0.8, 
+#           size = 3) +
+
+# other fomratting stuff
+labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
   xlim(-.8,.8) +
   ylim(-.8,.8) +
   theme_gray() +
   theme(legend.position = "right",
-          text = element_text(size = 12))
+        text = element_text(size = 12))
 
 ########################### ELEVATION GRADIENT ########################### 
 
@@ -410,36 +410,36 @@ ggplot() +
   
   # environment vectors
   geom_segment(data = coweeta.species.nms.vf.df,
-              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled, colour = env.var),
-              arrow = arrow(length = unit(.5, "cm")),
-              alpha = 0.8,
-              size = 2) +
-
+               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled, colour = env.var),
+               arrow = arrow(length = unit(.5, "cm")),
+               alpha = 0.8,
+               size = 2) +
+  
   # environment vector labels
   geom_text(data = coweeta.species.nms.vf.df,
-          aes(x = NMS2.scaled,
-             y = NMS1.scaled,
-             label = row.names(coweeta.species.nms.vf.df)),
-         alpha = 1,
-         size = 3) +
-
-# other fomratting stuff
-labs(color = "Environmental Variable:") +
+            aes(x = NMS2.scaled,
+                y = NMS1.scaled,
+                label = row.names(coweeta.species.nms.vf.df)),
+            alpha = 1,
+            size = 3) +
+  
+  # other fomratting stuff
+  labs(color = "Environmental Variable:") +
   xlim(-.8,.8) +
   ylim(-.8,.8) +
   theme_gray() +
   theme(legend.position = "right",
         text = element_text(size = 12))
 
-  # example code
-  
-  # geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-  #            color = "green", 
-  #            size = 6.0*coweeta.species.nms.df$"ACRU") +
-  # geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
-  #            color = "red", 
-  #            size = 6.0*coweeta.species.nms.df$"PIRI") +
-  # scale_color_manual(values = inferno(15)[c(3, 8, 11)],
-  #                    name = "Aquatic System Type") +
-  # annotate(geom = "label", x = -1, y = 1.25, size = 10,
-  #          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
+# example code
+
+# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+#            color = "green", 
+#            size = 6.0*coweeta.species.nms.df$"ACRU") +
+# geom_point(data = coweeta.species.nms.df, aes(x = NMS1, y = NMS2), 
+#            color = "red", 
+#            size = 6.0*coweeta.species.nms.df$"PIRI") +
+# scale_color_manual(values = inferno(15)[c(3, 8, 11)],
+#                    name = "Aquatic System Type") +
+# annotate(geom = "label", x = -1, y = 1.25, size = 10,
+#          label = paste("Stress: ", round(nmds_results$stress, digits = 3))) +
