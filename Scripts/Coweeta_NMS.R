@@ -265,6 +265,7 @@ soil_mositure.plot =
             aes(x = NMS2, 
                 y = NMS1, 
                 label = row.names(coweeta.species.nms.wa.df.sm)),
+                # color = row.names(coweeta.species.nms.wa.df.sm)),
             alpha = 1, 
             size = 4) +
 
@@ -278,7 +279,13 @@ soil_mositure.plot =
   scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
   scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
   xlab("NMS2") +
-  ylab("NMS1")
+  ylab("NMS1") +
+  scale_color_manual(values = c("#5EDA9E",
+                                '#D0A9AA',
+                                "#CDAD00",
+                                '#4CB7A5',
+                                '#815E4C',
+                                '#6B8E23'))
 
 print(soil_mositure.plot)
 
@@ -365,11 +372,11 @@ elevation.plot =
   scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
   xlab("NMS2") +
   ylab("NMS1") +
-  # scale_color_manual(values = c('#6B8E23',
-  #                               'lightsalmon',
-  #                               'seagreen',
-  #                               '#FBDB0C',
-  #                               '#C0FF3E'))
+  scale_color_manual(values = c("#D0A9AA",
+                                '#6B8E23',
+                                "#CDAD00",
+                                '#4CB7A5',
+                                '#815E4C'))
 
 print(elevation.plot)
 
@@ -437,8 +444,8 @@ env_vectors.plot =
                    yend = NMS1.scaled, 
                    colour = env.var.tidy),
                arrow = arrow(length = unit(.5, "cm")),
-               alpha = 0.7,
-               size = 1.5) +
+               alpha = 1,
+               size = 2) +
   
   # environment vector labels
   geom_text(data = coweeta.species.nms.vf.df,
@@ -458,6 +465,15 @@ env_vectors.plot =
   scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
   scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
   xlab("NMS2") +
-  ylab("NMS1")
+  ylab("NMS1") +
+  scale_color_manual(values = c("#5EDA9E",
+                                '#D0A9AA',
+                                "#CDAD00",
+                                '#4CB7A5',
+                                '#815E4C',
+                                '#6B8E23',
+                                '#AEBB51',
+                                '#C76E06',
+                                '#9FCAC1'))
 
 print(env_vectors.plot)
