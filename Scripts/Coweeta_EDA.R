@@ -73,7 +73,7 @@ coweeta.species.understory <- coweeta.species %>%
 
 plot.BA.mean.canopy <- 
   ggplot(coweeta.species.canopy,
-         aes(x =speciesCode, 
+         aes(x =reorder(speciesCode, -BasalArea), 
              y=BasalArea)) +
   stat_summary(fun = mean, 
                geom = 'bar',
@@ -81,6 +81,11 @@ plot.BA.mean.canopy <-
                fill = 'seagreen1',
                color = 'seagreen',
                size = 1) +
+  stat_summary(aes(label = round(..y..,2)),
+               fun = mean,
+               geom = 'text',
+               size = 3,
+               vjust = -0.5) +
   labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
        x = 'Species Code',
        title = 'Mean basal area per plot for canopy species at Coweeta LTERS',
@@ -92,7 +97,7 @@ plot.BA.mean.canopy
 
 plot.BA.mean.ustory <- 
   ggplot(coweeta.species.understory,
-         aes(x =speciesCode,
+         aes(x = reorder(speciesCode, -BasalArea),
              y=BasalArea)) +
   stat_summary(fun = mean, 
                geom = 'bar', 
@@ -100,6 +105,11 @@ plot.BA.mean.ustory <-
                fill = 'lightsalmon',
                color = 'lightsalmon3',
                size = 1) +
+  stat_summary(aes(label = round(..y..,2)),
+               fun = mean,
+               geom = 'text',
+               size = 3,
+               vjust = -0.5) +
   labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
        x = 'Species Code',
        title = 'Mean basal area per plot for understory species at Coweeta LTERS',

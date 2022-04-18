@@ -1,0 +1,74 @@
+---
+output: 
+  pdf_document:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: yes
+geometry: margin=2.54cm
+title: "Community Ecology in Coweeta Long Term Ecological Research"
+subtitle: "https://github.com/mtgaffney/BihariGaffneyOakley_ENV872_EDA_FinalProject.git"
+author: "Michael Gaffney, Eni Bihari, & Cal Oakley"
+fontsize: 12pt
+mainfont: Times New Roman
+
+---
+
+\newpage
+\tableofcontents 
+\newpage
+\listoftables 
+\newpage
+\listoffigures 
+\newpage
+
+```{r setup, include=FALSE}
+# Set your working directory
+
+# Load your packages
+
+# Set your ggplot theme
+
+# Load your datasets
+
+```
+
+# Rationale and Research Questions
+
+Coweeta Long Term Ecological Research (LTER) is one of the oldest long term ecological research sites in the United States. It's located in the eastern deciduous forest of the southern Appalachian Mountains, specifically Macon County, North Carolina. This ecosystem is ecologically valuable because of its combination of old age, high productivity, temperate biodiversity, & high environmental variation (NSF 2018). These last two factors are the ones on which our investigation will focus. 
+
+The southern Appalachians are home to numerous woody plant species. These species each have unique characteristics that make them better suited for certain sites more than others (think of shade tolerance, drought tolerance, or nutrient requirements). Also, the southern Appalachian mountains are so topographically diverse that species with vastly different site requirements can often be found within close proximity to one another, while groups of the same species are found far apart. This presents a challenge to researchers interested in community ecology because unless you collect extensive environmental measurements at every research site they cannot understand why a species assemblages occurs where it does. That is why we want to perform a comprehensive analysis of environmental and species occurrence data to determine if there are more general environmental trends that can explain the distribution of woody species at Coweeta.    
+
+\newpage
+
+# Dataset Information
+
+
+
+\newpage
+
+# Exploratory Analysis 
+
+
+
+\newpage
+
+# Analysis
+
+
+
+## Question 1: <insert specific question here and add additional subsections for additional questions below, if needed>
+
+## Question 2: 
+
+
+
+
+\newpage
+
+# Summary and Conclusions
+
+
+\newpage
+
+# References
+NSF 2018
