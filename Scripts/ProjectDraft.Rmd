@@ -54,6 +54,8 @@ coweeta.env <- as.data.frame(read_excel("../Data/Raw/chl_sitedata.xlsx"))
 #load the geospatial data for the sites (sheet CHL has the sites)
 coweeta.xy <- as.data.frame(read_excel("../Data/Raw/chl_XYdata.xlsx", sheet = "CHL"))
 
+set.seed(123)
+
 ```
 
 # Rationale and Research Questions
@@ -66,6 +68,8 @@ The southern Appalachians are home to numerous woody plant species. These specie
 
 # Dataset Information
 Three datasets in total were used for this analysis, all provided by Dean Urban and acquired between 1997 and 1999. Data collection was organized through 108 sample quadrats (20x20m) arranged in clusters of 3 to 4 along transects that covered an elevation gradient. Species data consists of the basal area of 18 species across 108 plots in Coweeta; realtively uncommon species were removed prior to analysis. Environmental data consists of 20 environmental variables across the same 108 sites. Finally, we were provided geospatial data for the sites.
+
+Table 1. Tree species present in the data set.
 
 Species Code |Scientific Name           |Common Name  
 -------------|--------------------------|--------------------------
@@ -87,6 +91,10 @@ QURU	       |Quercus rubra	            |Red Oak
 QUVE	       |Quercus velutina	        |Black Oak
 RHMA	       |Rhododendron maximum	    |Great Laurel
 ROPS	       |Robinia pseudoacacia	    |Black Locust
+
+\newpage
+
+Table 2. Environmental variables present in the data set.    
 
 Variable       |Description
 ---------------|---------------------------------
@@ -111,16 +119,103 @@ Clay	         |Clay (%)
 Silt	         |Silt (%)
 Sand	         |Sand (%)
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Geographic distribution of the 108 Coweeta plots."}
+\newpage
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 # get into the correct coordinate system
 coweeta.sf <- coweeta.xy %>% 
   st_as_sf(coords = c('UTME','UTMN'),
            crs=32617)
 #load points on the map to display location of Coweeta sites
-mapView(coweeta.sf, col.regions = "lightsalmon", map.types = "Esri.WorldImagery", legend = FALSE)
-ggplot(data = coweeta.sf) +
-  geom_sf(shape = 21, color = "lightsalmon3", fill = 'lightsalmon', size = 2, alpha = 0.6)
+# mapView(coweeta.sf, col.regions = "lightsalmon", map.types = "Esri.WorldImagery", legend = FALSE)
+
+# get NC counties shapefile for reference map
+counties_NC <- 
+  st_read('../Data/Spatial/cb_2018_us_county_20m.shp') %>% 
+  filter(STATEFP == 37)
+
+# get Macon County shapefile for reference map
+Macon_county = 
+  counties_NC %>% 
+  filter(NAME == 'Macon')
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Geographic distribution of the 108 Coweeta plots."}
+
+# map of plot locations in NC
+NC.plot = 
+  ggplot() +
+  geom_sf(data = counties_NC,
+          fill = NA, 
+          color = 'black',
+          alpha = 1) +
+  geom_sf(data = Macon_county, 
+          fill = 'lightsalmon',
+          color = 'black',
+          alpha = 1) +
+  # geom_sf(data = coweeta.sf,
+  #         shape = 21, 
+  #         color = "lightsalmon3", 
+  #         fill = 'lightsalmon', 
+  #         size = .5, 
+  #         alpha = 0.6) + 
+  annotate(geom = 'text',
+           x = -83,
+           y = 34.5,
+           size = 3,
+           color = "#545454",
+           label = expression(paste("Macon County"))) +
+  labs(title = "North Carolina") +
+  scale_y_continuous(breaks = c(34, 35, 36))
+
+# map of plot locations in Macom County
+Macon.plot =
+  ggplot() +
+  geom_sf(data = Macon_county, 
+          fill = NA,
+          color = 'black',
+          alpha = 0.5) +
+  geom_sf(data = coweeta.sf,
+          shape = 21, 
+          color = "lightsalmon3", 
+          fill = 'lightsalmon', 
+          size = 2, 
+          alpha = 0.6) +
+  labs(title = "Macon County") +
+  scale_x_continuous(breaks = c(-83.2, -83.4, -83.6)) +
+  scale_y_continuous(breaks = c(35, 35.1, 35.2, 35.3))
+  # theme(axis.text.x = element_text(angle = 45,
+  #                                  vjust = 1,
+  #                                  hjust = 1))
+
+# map of just plot locations
+Coweeta.plot =
+  ggplot() +
+  geom_sf(data = coweeta.sf,
+          shape = 21, 
+          color = "lightsalmon3", 
+          fill = 'lightsalmon', 
+          size = 2, 
+          alpha = 0.6) +
+  labs(title = "Research Area") +
+  scale_x_continuous(breaks = c(-83.42, -83.44, -83.46, -83.48)) +
+  scale_y_continuous(breaks = c(35.03, 35.04, 35.05, 35.06))
+  # theme(axis.text.x = element_text(angle = 45,
+  #                                  vjust = 1,
+  #                                  hjust = 1))
+
+
+# a cowplot of all of them
+plots_grid_spatial <-
+  plot_grid(NC.plot,
+            Macon.plot,
+            Coweeta.plot,
+            rel_heights = c(1.5, 2),
+            nrow = 2,
+            align = 'v')
+print(plots_grid_spatial)
 
 ```
 
@@ -188,6 +283,8 @@ plot.BA.mean.canopy <-
 plot.BA.mean.canopy
 
 ```
+
+\newpage
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = 'Mean basal area per plot for understory species at Coweeta LTERS.'}
 
@@ -519,6 +616,8 @@ r2.2 <- r2^2; r2.2-r2.1; r2.2
 
 ```
 
+\newpage
+
 In order to fully understand the ecological implications of the ordination we then created three different plots. We began by preparing the data to be plotted with the ggplot package.
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -554,6 +653,7 @@ coweeta.species.nms.df.full = as.data.frame(coweeta.species.nms) %>%
 coweeta.species.nms.df.full
 
 ```
+\newpage
 
 Then we created the plots. Figure 7 below shows a graph of the 108 Coweeta plots in ordination space. The first NMS axes (with most of the variance) is on the y-axis, the second (with the rest of the variance) is on the X axis. Placed on top of this ordination are correlation vectors for all of the environmental variables.  Effectively, they show how well correlated the environmental variables are with the ordination axes that were generated from the species data: the direction of the vector shows the direction of the correlation (positive/negative), and the length shows how strong the correlation is. Here, the C:N ratio is strongly correlated with the first NMS axis, where K (potassium) is negatively correlated. This suggests that NMS 1 likely represents a gradient of soil properties, or, given the Coweeta system, it likely represents a gradient of soil moisture. While NMS 2 contained far less variance, it appears to be positively correlated with elevation, meaning that it likely represents a rough elevation gradient.
 
@@ -631,6 +731,8 @@ env_vectors.plot =
 print(env_vectors.plot)
 
 ```
+
+\newpage
 
 We further explored the meaning of the gradients by plotting individual tree species by relative basal area into NMS space. Figure 8 below shows 6 species in ordination space sorted by the soil moisture gradient. What is particularly evident here is the way that sweet birch (BELE) and tulip trees (LITU) appear in the areas of relatively high soil moisture, where pitch pine (PIRI), scarlet oak (QUCO) and mountain laurel tend to appear in places with drier soils. Red maple (ACRU), a generalist, appears all over and does not seem to favor any particular soil type.
 
@@ -726,6 +828,7 @@ soil_mositure.plot =
 print(soil_mositure.plot)
 
 ```
+\newpage
 
 Figure 9 emphasizes species that sorted particular well on the elevation gradient. White oak (QUAL) appears with flowering dogwood (COFL) more often in lower elevation sites, where great laurel (RHMA) and black locust (ROPS) appear at much higher elevations.
 

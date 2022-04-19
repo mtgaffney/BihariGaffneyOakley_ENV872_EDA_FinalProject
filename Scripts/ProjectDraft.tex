@@ -88,8 +88,6 @@
 \newpage
 \tableofcontents 
 \newpage
-\listoftables 
-\newpage
 \listoffigures 
 \newpage
 
@@ -127,10 +125,15 @@ distribution of woody species at Coweeta.
 \section{Dataset Information}\label{dataset-information}}
 
 Three datasets in total were used for this analysis, all provided by
-Urban. Species data consists the basal area (BA) of 18 species across
-108 plots in Coweeta. Environmental data consists of 20 environmental
-variables across the same 108 sites. Finally, we were provided
-geospatial data for the sites.
+Dean Urban and acquired between 1997 and 1999. Data collection was
+organized through 108 sample quadrats (20x20m) arranged in clusters of 3
+to 4 along transects that covered an elevation gradient. Species data
+consists of the basal area of 18 species across 108 plots in Coweeta;
+realtively uncommon species were removed prior to analysis.
+Environmental data consists of 20 environmental variables across the
+same 108 sites. Finally, we were provided geospatial data for the sites.
+
+Table 1. Tree species present in the data set.
 
 \begin{longtable}[]{@{}lll@{}}
 \toprule
@@ -157,6 +160,10 @@ RHMA & Rhododendron maximum & Great Laurel\tabularnewline
 ROPS & Robinia pseudoacacia & Black Locust\tabularnewline
 \bottomrule
 \end{longtable}
+
+\newpage
+
+Table 2. Environmental variables present in the data set.
 
 \begin{longtable}[]{@{}ll@{}}
 \toprule
@@ -186,9 +193,11 @@ Sand & Sand (\%)\tabularnewline
 \bottomrule
 \end{longtable}
 
+\newpage
+
 \begin{figure}
 \centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-1-1.pdf}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-2-1.pdf}
 \caption{Geographic distribution of the 108 Coweeta plots.}
 \end{figure}
 
@@ -212,13 +221,15 @@ ecosystems. The highest BA understory species is a native rhododendron
 
 \begin{figure}
 \centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-2-1.pdf}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-3-1.pdf}
 \caption{Mean basal area per plot for canopy species at Coweeta LTERS.}
 \end{figure}
 
+\newpage
+
 \begin{figure}
 \centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-3-1.pdf}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-4-1.pdf}
 \caption{Mean basal area per plot for understory species at Coweeta
 LTERS.}
 \end{figure}
@@ -234,17 +245,17 @@ stump sprouts, but only a fraction of these survive into old age.
 We also created a cowplot of all of these species alongside one another
 for easy comparison.
 
-\begin{figure}
-\centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-5-1.pdf}
-\caption{Frequency distribution of areas for dominant canopy trees in
-plots at Coweeta LTRS.}
-\end{figure}
-
-Finally, explored some of the environmetnal variables. Although our
+Finally, we explored some of the environmental variables. Although our
 method of analysis for this data set will not require us to eliminate
 correlated variables for statistical purposes, it is worth exploring
 what some of the correlations are.
+
+\begin{figure}
+\centering
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-6-1.pdf}
+\caption{Frequency distribution of areas for dominant canopy trees in
+plots at Coweeta LTRS.}
+\end{figure}
 
 \newpage
 
@@ -275,14 +286,14 @@ will create an ordination where ecological distance should correspond
 with a 1:1 ratio with ordination distance; far ecological distance
 should be far ordination distance.
 
-NMS is particularly appropriate for this dataset because, unlike other
+NMS is particularly appropriate for this data set because, unlike other
 statistical tests, it makes no parametric assumptions about input data
 sources; as tree basal are not normally distributed, this is
 particularly advantageous. Additionally, NMS works particularly well
 when there are a great deal of zeroes in the data, which is often the
 case for species data on tree plots.
 
-The NMS process began by screenign the environmetnal variables for
+The NMS process began by screening the environmental variables for
 correlations and removing the correlated variables. Although the actual
 NMS analysis was run on the species data, removing correlations is
 important for visual purposes later on. We then relativized the original
@@ -298,22 +309,18 @@ area---will have different scores than those that are very far apart.
 The next step in running the NMS was to start a stepdown procedure. This
 involved producing a full 6 dimensional NMS object, and then evaluating
 how well it performed. An NMS will produce two important values: and
-R\textsuperscript{2} and stress values. With a full ordination, we
-plotted these values to explore what the optimal number of dimensions
-for the final NMS would be. The optimal number captures a significant
-portion of the variance but also has low stress. In this case, 2 axes
-appears to be the best configuration (with a stress value below .3 and
-an R\textsuperscript{2} around .6).
+R\textsuperscript{2} and stress values (Figure 5). With a full
+ordination, we plotted these values to explore what the optimal number
+of dimensions for the final NMS would be. The optimal number captures a
+significant portion of the variance but also has low stress. In this
+case, 2 axes appears to be the best configuration (with a stress value
+below .3 and an R\textsuperscript{2} around .6).
 
-\begin{verbatim}
-## $names
-## [1] "conf"   "stress" "r2"     "mindim" "maxdim" "nits"  
-## 
-## $class
-## [1] "nmds"
-\end{verbatim}
-
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-8-1.pdf}
+\begin{figure}
+\centering
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-10-1.pdf}
+\caption{Stress test and R\textsuperscript{2} for 6-dimensional NMS.}
+\end{figure}
 
 We then ran a second final NMS with two dimensions. In this case, we
 have R generate not one but twenty versions of this same NMS, so that we
@@ -330,26 +337,30 @@ of the variance.
 
 After rotating the NMS, we checked for how well the analysis performed.
 We plotted a Shepard Diagram, which illustrates the relationship between
-ecological distance and ordination distance. Ideally, this is a one to
-one relationship; here, we see that the origination performed relatively
-well in aligning ecological distance with ordination space. Here, we
-also checked the overall R\textsuperscript{2} for the NMS, which was
-roughly 60\% depending on the different runs. Of the variance explained,
-roughly 36\% was captured by NMS 1, and the other 24\% was captured by
-NMS 2.
+ecological distance and ordination distance (Figure 6). Ideally, this is
+a one to one relationship; here, we see that the origination performed
+relatively well in aligning ecological distance with ordination space.
+Here, we also checked the overall R\textsuperscript{2} for the NMS,
+which was roughly 60\% depending on the different runs. Of the variance
+explained, roughly 36\% was captured by NMS 1, and the other 24\% was
+captured by NMS 2.
 
 \begin{figure}
 \centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-11-1.pdf}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-13-1.pdf}
 \caption{Shepard Diagram showing the relationship between ordination
 distance and ecological distance.}
 \end{figure}
+
+\newpage
 
 In order to fully understand the ecological implications of the
 ordination we then created three different plots. We began by preparing
 the data to be plotted with the ggplot package.
 
-Then we created the plots. Figure 1 below shows a graph of the 108
+\newpage
+
+Then we created the plots. Figure 7 below shows a graph of the 108
 Coweeta plots in ordination space. The first NMS axes (with most of the
 variance) is on the y-axis, the second (with the rest of the variance)
 is on the X axis. Placed on top of this ordination are correlation
@@ -367,12 +378,14 @@ that it likely represents a rough elevation gradient.
 
 \begin{figure}
 \centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-14-1.pdf}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-16-1.pdf}
 \caption{Environmental vectors showing correlations in NMS space.}
 \end{figure}
 
+\newpage
+
 We further explored the meaning of the gradients by plotting individual
-tree species by relative basal area into NMS space. Figure 2 below shows
+tree species by relative basal area into NMS space. Figure 8 below shows
 6 species in ordination space sorted by the soil moisture gradient. What
 is particularly evident here is the way that sweet birch (BELE) and
 tulip trees (LITU) appear in the areas of relatively high soil moisture,
@@ -380,21 +393,17 @@ where pitch pine (PIRI), scarlet oak (QUCO) and mountain laurel tend to
 appear in places with drier soils. Red maple (ACRU), a generalist,
 appears all over and does not seem to favor any particular soil type.
 
-\begin{figure}
-\centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-15-1.pdf}
-\caption{Tree species plotted in NMS space to illustrate sorting along
-the soil moisture gradient (roughly NMS1).}
-\end{figure}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-17-1.pdf}
+\newpage
 
-Figure 3 emphasizes speices that sorted particular well on the elevation
+Figure 9 emphasizes species that sorted particular well on the elevation
 gradient. White oak (QUAL) appears with flowering dogwood (COFL) more
 often in lower elevation sites, where great laurel (RHMA) and black
 locust (ROPS) appear at much higher elevations.
 
 \begin{figure}
 \centering
-\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-16-1.pdf}
+\includegraphics{ProjectDraft_files/figure-latex/unnamed-chunk-18-1.pdf}
 \caption{Tree species plotted in NMS space to illustrate sorting along
 the elevation gradient (roughly NMS2).}
 \end{figure}
@@ -410,9 +419,9 @@ than elevation does. The relatively light elevation gradient in the
 southern Appalachians (compared to the profound gradient in the Sierran
 system as Urban et al.~studied, for example), clearly affects the
 pattern of different trees, but not as substantially as soil. With data
-of environmetnal variables more attuned specifcally to soil moisture, it
-might be possible to verify more specifically that thsi factor is what
-sorts tree species in this space.
+of environmental variables more attuned specifically to soil moisture,
+it might be possible to verify more specifically that this factor is
+what sorts tree species in this space.
 
 \newpage
 
