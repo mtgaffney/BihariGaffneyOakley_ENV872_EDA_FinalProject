@@ -1,0 +1,945 @@
+---
+output: 
+  pdf_document:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: yes
+always_allow_html: yes
+geometry: margin=2.54cm
+title: "Community Ecology in Coweeta Long Term Ecological Research"
+subtitle: "https://github.com/mtgaffney/BihariGaffneyOakley_ENV872_EDA_FinalProject.git"
+author: "Michael Gaffney, Eni Bihari, & Cal Oakley"
+fontsize: 12pt
+mainfont: Times New Roman
+
+---
+
+\newpage
+\tableofcontents 
+\newpage
+\listoffigures 
+\newpage
+
+```{r setup, include=FALSE}
+
+# Set your working directory; should default scripts folder within project directory.
+getwd()
+
+#load packages
+library(tidyverse)
+library(readxl)
+library(sf)
+library(mapview)
+library(cowplot)
+library(vegan)
+library(ggplot2)
+# library(ggvegan)
+library(ggpubr)
+library(tidyverse)
+library(lubridate)
+library(plyr)
+library(ecodist)
+
+# Set your ggplot theme
+# create a theme with gray defaults
+theme1 <- theme_gray() 
+
+# set it as the default theme
+theme_set(theme1)
+
+# Load your datasets
+coweeta.species <- as.data.frame(read_excel("../Data/Raw/chl_sppdataBA.xlsx", sheet = "dataBA"))
+#load the environmental variables for the same 108 plots
+coweeta.env <- as.data.frame(read_excel("../Data/Raw/chl_sitedata.xlsx"))
+#load the geospatial data for the sites (sheet CHL has the sites)
+coweeta.xy <- as.data.frame(read_excel("../Data/Raw/chl_XYdata.xlsx", sheet = "CHL"))
+
+set.seed(123)
+
+```
+
+# Rationale and Research Questions
+
+Coweeta Long Term Ecological Research (LTER) is one of the oldest long term ecological research sites in the United States. It's located in the eastern deciduous forest of the southern Appalachian Mountains, specifically Macon County, North Carolina. This ecosystem is ecologically valuable because of its combination of old age, high productivity, temperate biodiversity, & high environmental variation (NSF 2018). These last two factors are the ones on which our investigation will focus. 
+
+The southern Appalachians are home to numerous woody plant species. These species each have unique characteristics that make them better suited for certain sites more than others (think of shade tolerance, drought tolerance, or nutrient requirements). Also, the southern Appalachian mountains are so topographically diverse that species with vastly different site requirements can often be found within close proximity to one another, while groups of the same species are found far apart. This presents a challenge to researchers interested in community ecology because unless you collect extensive environmental measurements at every research site they cannot understand why a species assemblages occurs where it does. That is why we want to perform a comprehensive analysis of environmental and species occurrence data to determine if there are more general environmental trends that can explain the distribution of woody species at Coweeta.    
+
+\newpage
+
+# Dataset Information
+Three datasets in total were used for this analysis, all provided by Dean Urban and acquired between 1997 and 1999. Data collection was organized through 108 sample quadrats (20x20m) arranged in clusters of 3 to 4 along transects that covered an elevation gradient. Species data consists of the basal area of 18 species across 108 plots in Coweeta; realtively uncommon species were removed prior to analysis. Environmental data consists of 20 environmental variables across the same 108 sites. Finally, we were provided geospatial data for the sites.
+
+Table 1. Tree species present in the data set. 
+
+Species Code |Scientific Name           |Common Name  
+-------------|--------------------------|--------------------------
+ACRU	       |Acer rubrum	              |Red Maple
+AMAR	       |Amelanchier arborea	      |Common Serviceberry
+BELE	       |Betula lenta	            |Sweet Birch
+CAGL	       |Carya glabra	            |Pignut Hickory
+CATO	       |Carya tomentosa	          |Mockernut Hickory
+COFL	       |Cornus florida	          |Flowering Dogwood
+KALA	       |Kalmia latifolia	        |Mountain Laurel
+LITU	       |Liriodendron tulipifera	  |Tulip Tree
+NYSY	       |Nyssa sylvatica	          |Black Tupelo
+OXAR	       |Oxydendron arboreum	      |Sourwood
+PIRI	       |Pinus rigida	            |Pitch Pine
+QUAL	       |Quercus alba	            |White Oak
+QUCO	       |Quercus coccinea	        |Scarlet Oak
+QUPR	       |Quercus prinus	          |Chestnut Oak
+QURU	       |Quercus rubra	            |Red Oak
+QUVE	       |Quercus velutina	        |Black Oak
+RHMA	       |Rhododendron maximum	    |Great Laurel
+ROPS	       |Robinia pseudoacacia	    |Black Locust
+
+\newpage
+
+Table 2. Environmental variables present in the data set. 
+
+Variable       |Description
+---------------|---------------------------------
+Elevation	     |Elevation (M)
+SlopeDEM	     |Slope
+TAspectD       |Transformed Aspect
+TCI	           |Topograhpic Convergence Index
+xDepth	       |Mean soil depth (cm)
+sDepth	       |Standard deviation of depth
+pH	           |pH
+Acidity	       |Acidity
+Ca	           |Calcium (cmol(+)/kg)
+K	             |Potassium (cmol(+)/kg)
+Mg	           |Magnesium (cmol(+)/kg)
+P	             |Phosphorous (g/g)
+C	             |Soil carbon (%)
+N	             |Nitrogen (%)
+C:N	           |Carbon:Nitrogen ratio
+ECEC	         |Effective Cation Exchange Capacity
+BS	           |Base Saturation
+Clay	         |Clay (%)
+Silt	         |Silt (%)
+Sand	         |Sand (%)
+
+\newpage
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+# get into the correct coordinate system
+coweeta.sf <- coweeta.xy %>% 
+  st_as_sf(coords = c('UTME','UTMN'),
+           crs=32617)
+#load points on the map to display location of Coweeta sites
+# mapView(coweeta.sf, col.regions = "lightsalmon", map.types = "Esri.WorldImagery", legend = FALSE)
+
+# get NC counties shapefile for reference map
+counties_NC <- 
+  st_read('../Data/Spatial/cb_2018_us_county_20m.shp') %>% 
+  filter(STATEFP == 37)
+
+# get Macon County shapefile for reference map
+Macon_county = 
+  counties_NC %>% 
+  filter(NAME == 'Macon')
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Geographic distribution of the 108 Coweeta plots."}
+
+# map of plot locations in NC
+NC.plot = 
+  ggplot() +
+  geom_sf(data = counties_NC,
+          fill = NA, 
+          color = 'black',
+          alpha = 1) +
+  geom_sf(data = Macon_county, 
+          fill = 'lightsalmon',
+          color = 'black',
+          alpha = 1) +
+  # geom_sf(data = coweeta.sf,
+  #         shape = 21, 
+  #         color = "lightsalmon3", 
+  #         fill = 'lightsalmon', 
+  #         size = .5, 
+  #         alpha = 0.6) + 
+  annotate(geom = 'text',
+           x = -83,
+           y = 34.5,
+           size = 3,
+           color = "#545454",
+           label = expression(paste("Macon County"))) +
+  labs(title = "North Carolina",
+       x=' ',
+       y=' ') +
+  scale_y_continuous(breaks = c(34, 35, 36)) +
+  scale_x_continuous(breaks = c(-76, -78, -80, -82, -84))
+
+# map of plot locations in Macom County
+Macon.plot =
+  ggplot() +
+  geom_sf(data = Macon_county, 
+          fill = NA,
+          color = 'black',
+          alpha = 0.5) +
+  geom_sf(data = coweeta.sf,
+          shape = 21, 
+          color = "lightsalmon3", 
+          fill = 'lightsalmon', 
+          size = 2, 
+          alpha = 0.6) +
+  labs(title = "Macon County") +
+  scale_x_continuous(breaks = c(-83.2, -83.4, -83.6)) +
+  scale_y_continuous(breaks = c(35, 35.1, 35.2, 35.3))
+  # theme(axis.text.x = element_text(angle = 45,
+  #                                  vjust = 1,
+  #                                  hjust = 1))
+
+# map of just plot locations
+Coweeta.plot =
+  ggplot() +
+  geom_sf(data = coweeta.sf,
+          shape = 21, 
+          color = "lightsalmon3", 
+          fill = 'lightsalmon', 
+          size = 2, 
+          alpha = 0.6) +
+  labs(title = "Research Area") +
+  scale_x_continuous(breaks = c(-83.42, -83.44, -83.46, -83.48)) +
+  scale_y_continuous(breaks = c(35.03, 35.04, 35.05, 35.06))
+  # theme(axis.text.x = element_text(angle = 45,
+  #                                  vjust = 1,
+  #                                  hjust = 1))
+
+# a cowplot of all of them
+plots_grid_spatial <-
+  plot_grid(NC.plot,
+            Macon.plot,
+            Coweeta.plot,
+            rel_heights = c(1.5, 2),
+            nrow = 2,
+            align = 'v')
+print(plots_grid_spatial)
+
+```
+
+\newpage
+
+# Exploratory Analysis 
+
+We first explored the species composition of the Coweeta plots by looking at the mean basal area (BA) per species.  We did this separately for the canopy and understory species, since these species play very different ecological roles in these ecosystems.  The canopy and understory are made up of very different species, and the trees have very different sizes and abundances. Canopy trees tend to be sparser and larger, while understory trees tend to be denser and smaller. Chestnut oak (QUPR), red maple (ACRU), northern red oak (QURU), and scarlet oak (QUCO) are the trees that make up the most BA among overstory trees, which is to be expected in these oak-hickory dominated mountainous ecosystems.  The highest BA understory species is a native rhododendron (RHMA), which is also to be expected in these ecosystems.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = 'Mean basal area per plot for canopy species at Coweeta LTERS.'}
+
+#display the distribution of basal areas by species
+
+#first pivot_longer & subset to canopy species
+coweeta.species.canopy <- coweeta.species %>% 
+  select(Plot:ACRU, BELE:CATO, LITU:NYSY, PIRI:QUVE, ROPS) %>% 
+  pivot_longer(!Plot, names_to = 'speciesCode', values_to = 'BasalArea')
+
+#If you want to do this for understory species as well
+coweeta.species.understory <- coweeta.species %>%
+  select(Plot,AMAR, COFL:KALA, OXAR, RHMA) %>%
+  pivot_longer(!Plot, names_to = 'speciesCode', values_to = 'BasalArea')
+
+#plot the mean basal area for each species across all plots to get sense of 
+#landscape level distributions
+# plot.BA.sum <- ggplot(coweeta.species.canopy,
+#                   aes(x =speciesCode, y=BasalArea, fill = speciesCode)) +
+#   stat_summary(fun = sum, geom = 'bar') +
+#   labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
+#        x = 'Species Code',
+#        title = 'Mean basal area for canopy species at Coweeta LTERS',
+#        fill = "Species Code") +
+#   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+# plot.BA.sum
+# 
+# coweeta.species.canopy.means = 
+#   coweeta.species.canopy %>% 
+#   group_by(speciesCode) %>% 
+#   summarize(meanBA = mean(BasalArea))
+
+# CANOPY SPECIES BA PLOT
+
+plot.BA.mean.canopy <- 
+  ggplot(coweeta.species.canopy,
+         aes(x =reorder(speciesCode, -BasalArea), 
+             y=BasalArea)) +
+  stat_summary(fun = mean, 
+               geom = 'bar',
+               alpha = 0.6,
+               fill = 'seagreen1',
+               color = 'seagreen',
+               size = 1) +
+  stat_summary(aes(label = round(..y..,2)),
+               fun = mean,
+               geom = 'text',
+               color = 'seagreen',
+               size = 3,
+               vjust = -0.5) +
+  labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
+       x = 'Species Code',
+       fill = "Species Code") +
+  theme(axis.text.x = element_text(angle = 45, 
+                                   vjust = 1, 
+                                   hjust = 1))
+plot.BA.mean.canopy
+
+```
+
+\newpage
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = 'Mean basal area per plot for understory species at Coweeta LTERS.'}
+
+# UNDERSTORY SPECIES BA PLOT
+
+plot.BA.mean.ustory <- 
+  ggplot(coweeta.species.understory,
+         aes(x = reorder(speciesCode, -BasalArea),
+             y=BasalArea)) +
+  stat_summary(fun = mean, 
+               geom = 'bar', 
+               alpha = 0.6,
+               fill = 'lightsalmon',
+               color = 'lightsalmon3',
+               size = 1) +
+  stat_summary(aes(label = round(..y..,2)),
+               fun = mean,
+               geom = 'text',
+               color= 'lightsalmon3',
+               size = 3,
+               vjust = -0.5) +
+  labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
+       x = 'Species Code',
+       fill = "Species Code") +
+  theme(axis.text.x = element_text(angle = 45, 
+                                   vjust = 1, 
+                                   hjust = 1))
+plot.BA.mean.ustory
+
+```
+
+We also explored the basal area distributions individually for some of the most common canopy species in Coweeta.  These distributions are sharply skewed right for all 4 species, which can be expected for the dominant trees in such ecosystems.  This simply means that there are very many small trees and very few large trees, which makes sense based on their reproductive strategy.  These trees produce a lot of seeds and stump sprouts, but only a fraction of these survive into old age. We created a cowplot of all of these species alongside one another for easy comparison.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#plot one species' basal area for each plot 
+
+# ACRU 
+
+#first subset just for desired species
+coweeta.ACRU <- coweeta.species.canopy %>% 
+  filter(speciesCode == "ACRU")
+
+# get the mean BA just for labellin gpurposes
+mean.ACRU = as.character(round(mean(coweeta.ACRU$BasalArea), digits = 3))
+# mean.ACRU
+
+#then plot
+plot.ACRU <-  
+  ggplot(coweeta.ACRU, aes(x=BasalArea)) + 
+  geom_area(aes(y=..count..), 
+            stat = 'bin',
+            binwidth = 3,
+            fill = '#C0FF3E',
+            alpha = .6) +
+  geom_vline(xintercept = mean(coweeta.ACRU$BasalArea), 
+             color = '#6B8E23',
+             size = 1) +
+  theme(legend.position = 'none') +
+  annotate(geom = 'text', 
+           x = 20, 
+           y = 60, 
+           color = '#6B8E23',
+           label = expression(paste("mean = ", 4.442, " ft"^2))) +
+  xlim(0,45) +
+  ylim(0,75) +
+  labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
+       title = "Red maple (ACRU)")
+# plot.ACRU
+
+#QUPR
+
+coweeta.QUPR <- coweeta.species.canopy %>% 
+  filter(speciesCode == "QUPR")
+
+mean.QUPR = as.character(round(mean(coweeta.QUPR$BasalArea), digits = 3))
+# mean.QUPR
+
+plot.QUPR <-  
+  ggplot(coweeta.QUPR, aes(x=BasalArea)) + 
+  geom_area(aes(y=..count..), 
+            stat = 'bin',
+            binwidth = 3,
+            fill = 'lightsalmon',
+            alpha = .6) +
+  geom_vline(xintercept = mean(coweeta.QUPR$BasalArea), 
+             color = "lightsalmon3",
+             size = 1) +
+  theme(legend.position = 'none') +
+  annotate(geom = 'text', 
+           x = 20, 
+           y = 60, 
+           color = "lightsalmon3",
+           label = expression(paste("mean = ", 7.087, " ft"^2))) +
+  xlim(0,45) +
+  ylim(0,75) +
+  labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
+       title = "Chestnut oak (QUPR)")
+# plot.QUPR
+
+#QURU
+
+coweeta.QURU <- coweeta.species.canopy %>% 
+  filter(speciesCode == "QURU")
+
+mean.QURU = as.character(round(mean(coweeta.QURU$BasalArea), digits = 3))
+# mean.QURU
+
+plot.QURU <-  
+  ggplot(coweeta.QURU, aes(x=BasalArea)) + 
+  geom_area(aes(y=..count..), 
+            stat = 'bin',
+            binwidth = 3,
+            fill = '#FBDB0C',
+            alpha = .4) +
+  geom_vline(xintercept = mean(coweeta.QURU$BasalArea), 
+             color = "#CDAD00",
+             size = 1) +
+  theme(legend.position = 'none') +
+  annotate(geom = 'text', 
+           x = 20, 
+           y = 60, 
+           color = "#CDAD00",
+           label = expression(paste("mean = ", 3.276, " ft"^2))) +
+  xlim(0,45) +
+  ylim(0,75) +
+  labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
+       title = "Northern red oak (QURU)")
+# plot.QURU
+
+#QUCO
+
+coweeta.QUCO <- coweeta.species.canopy %>% 
+  filter(speciesCode == "QUCO")
+
+mean.QUCO = as.character(round(mean(coweeta.QUCO$BasalArea), digits = 3))
+# mean.QUCO
+
+plot.QUCO <-  
+  ggplot(coweeta.QUCO, aes(x=BasalArea)) + 
+  geom_area(aes(y=..count..), 
+            stat = 'bin',
+            binwidth = 3,
+            fill = 'seagreen1',
+            alpha = .4) +
+  geom_vline(xintercept = mean(coweeta.QUCO$BasalArea), 
+             color = "seagreen",
+             size = 1) +
+  theme(legend.position = 'none') +
+  annotate(geom = 'text', 
+           x = 20, 
+           y = 60, 
+           color = "seagreen",
+           label = expression(paste("mean = ", 2.564, " ft"^2))) +
+  xlim(0,45) +
+  ylim(0,75) +
+  labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
+       title = "Scarlet Oak (QUCO)")
+# plot.QUCO
+
+```
+
+Finally, we explored some of the environmental variables. Although our method of analysis for this data set will not require us to eliminate correlated variables for statistical purposes, it is worth exploring what some of the correlations are.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Frequency distribution of areas for dominant canopy trees in plots at Coweeta LTRS.'}
+
+# COWPLOT OF ALL 4
+
+# title <- ggdraw() + 
+#   draw_label(
+#     "Frequency distribution of areas for dominant canopy trees in plots at Coweeta LTRS",
+#     x = 0,
+#     hjust = 0,
+#     size = 14,) 
+
+  # theme(
+  #   # add margin on the left of the drawing canvas,
+  #   # so title is aligned with left edge of first plot
+  #   plot.margin = margin(0, 0, 0, 7)
+  # )
+
+plots_grid <-
+  plot_grid(plot.QUPR,
+            plot.QURU,
+            plot.ACRU,
+            plot.QUCO,
+            nrow = 2, 
+            align = 'hv')
+print(plots_grid)
+
+# plots_grid.title = 
+#   plot_grid(title, 
+#             plots_grid, 
+#             nrow = 2, 
+#             align = 'hv',
+#             rel_heights = c(0.1, 2))
+# 
+# print(plots_grid.title)
+
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+names(coweeta.env)
+coweeta.env.cor <- data.frame(cor(coweeta.env[,-1]))
+print(coweeta.env.cor,digits=3)
+#save correlations for presentation
+#write.csv(coweeta.env.cor, './Data/Outputsu/CoweetaVarCors.csv', row.names = TRUE)
+
+```
+
+\newpage
+
+# Analysis
+
+**Question:**  
+
+Our question for this analysis is: what environmental variables, or complex of variables, primarily sorts tree communities in Coweeta? Our initial hypothesis, following a similiar study conducted by Urban et al. (2000), is that elevation, serving as a proxy for both temperature and moisture, will function as the primary sorting mechanism for tree species. In order to answer this question, we elected to use Nonmetric Multidimensional Scaling (NMS). NMS is an ordination technique that can visualize trends in complex, non-parametric, multivariate datasets. As a technique, NMS simplifies complex data by plotting sites in ordination space. The aim is to draw sites close together on a graph that are close together ecologically. It converts ecological distance, in other words, to graph distance. 
+
+NMS works through an iterative process. It creates a series of numerical approximations that capture trends within the data. The process first randomly scatters the plots, regresses the ordination distances and ecological distances between the points, and then “jitters” the data once again to create an improved configuration. A successful ordination will create an ordination where ecological distance should correspond with a 1:1 ratio with ordination distance; far ecological distance should be far ordination distance.
+
+NMS is particularly appropriate for this data set because, unlike other statistical tests, it makes no parametric assumptions about input data sources; as tree basal are not normally distributed, this is particularly advantageous. Additionally, NMS works particularly well when there are a great deal of zeroes in the data, which is often the case for species data on tree plots. 
+
+The NMS process began by screening the environmental variables for correlations and removing the correlated variables. Although the actual NMS analysis was run on the species data, removing correlations is important for visual purposes later on. We then relativized the original species data to account for the vast difference in basal area between some of the species. With this relativized data, we then created a distance matrix from the species data. This is done using the ecodist package, using the Bray Curtis method (Urban et al. 2007. This produces a matrix that details how far apart each plot is ecologically from one another. In other words, plots that are ecologically very similar—having similar tree communities, species richness, and basal area—will have different scores than those that are very far apart.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+source("../scripts/screen_cor.R")
+screen.cor(coweeta.env[,-1])
+
+#remove some of the correlated variables
+coweeta.env.11 <- coweeta.env %>%
+  select(-c("N", "ECEC", "BS", "Silt", "Acidity", "Mg"))
+
+#next, we need to relativize the species data to account for the fact that some species are far more common than others
+#source the helper function that comes directly from an R script, not a package (thanks again to Urban)
+source("../scripts/reldata.R")
+#now we can relativize the data using this function from the script
+#relativization method: column maxima and row sums, sometimes called "Wisconsin double"
+coweeta.species.rel <- reldata(coweeta.species[,-1], byrow=T, bycol=T, rowfirst=F)
+#new dataset as relative values of all species per plot, similar to the original set
+
+#now convert the realtivized values to a distance matrix using the Bray-Curtis method
+coweeta.species.bcd <- distance(as.matrix(coweeta.species.rel), method="bray")
+
+```
+
+The next step in running the NMS was to start a stepdown procedure. This involved producing a full 6 dimensional NMS object, and then evaluating how well it performed. An NMS will produce two important values: and R^2^ and stress values (Figure 5). With a full ordination, we plotted these values to explore what the optimal number of dimensions for the final NMS would be. The optimal number captures a significant portion of the variance but also has low stress. In this case, 2 axes appears to be the best configuration (with a stress value below .3 and an R^2^ around .6). 
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+#now that we have a distance matrix that will actually work, let's run the NMS.
+#NB: this is a first run, and it will create 60 ordinations (stepdown, 1:6 dims, 10 iterations each). 
+#We will use these to figure out what the best number of axes is.
+coweeta.species.nmsstep <- nmds(coweeta.species.bcd, nits=10, mindim=1, maxdim=6)
+attributes(coweeta.species.nmsstep)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Stress test and R^2^ for 6-dimensional NMS.'}
+
+#Now we need to plot the stress values and R2 values for each dimension (# of axes)
+plot.nmds(coweeta.species.nmsstep)
+#second plot shows the R^2 explained by # of dimensions; 2 axes gets us about 60% of the variance, so we can try that.
+
+```
+
+We then ran a second final NMS with two dimensions. In this case, we have R generate not one but twenty versions of this same NMS, so that we can choose the one that performs best. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+coweeta.species.nmds <- nmds(coweeta.species.bcd, mindim=2, maxdim=2, nits=20)
+#which of these 20 repetitions did the best? NB: NMS is stochastic, so every run is a little different
+s.min <- which.min(coweeta.species.nmds$stress)
+#this returns the "stress" value for the best one--need to check what that value actually means
+coweeta.species.nmds$stress[s.min]
+#grab the best run; this explains about 60% of the variance, which is solid but not fantastic
+coweeta.species.nms <- nmds.min(coweeta.species.nmds,dims=2)
+
+```
+
+The final NMS object, however, is not directly intelligible. This is because NMS generates all of the axes at the same time; in doing so, it does not pay attention to importance. In practice, this means that in order to properly understand what the axes are, it is necessary to run a Principle Component Analysis (PCA) on the axes. The PCA effectively rotates the initial NMS ordination in such a way so as to force the points to align with the axes. It also makes axis 1 contain the majority of the variance.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+#Use a principle component analysis to force most of the variance into axis 1, leaving the rest for axis 2
+nms.pca <- princomp(coweeta.species.nms)
+print(nms.pca)
+summary(nms.pca)
+#now replace the original NMS scores with the rotated PCA scores
+coweeta.species.nms <- nms.pca$scores
+#rename the columns for purposes of clarity
+colnames(coweeta.species.nms) <- c("NMS1", "NMS2")
+
+```
+
+After rotating the NMS, we checked for how well the analysis performed. We plotted a Shepard Diagram, which illustrates the relationship between ecological distance and ordination distance (Figure 6). Ideally, this is a one to one relationship; here, we see that the origination performed relatively well in aligning ecological distance with ordination space. Here, we also checked the overall R^2^ for the NMS, which was roughly 60% depending on the different runs. Of the variance explained, roughly 36% was captured by NMS 1, and the other 24% was captured by NMS 2.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Shepard Diagram showing the relationship between ordination distance and ecological distance.'}
+
+#the whole point of NMS is to get the sample points that are ecologically similiar to be close together on a graph
+#A Shepard Diagram let's us know how well we did this.
+#compute the distances between points in the NMS
+nms2.xod <- dist(coweeta.species.nms)
+#plot the NMS distances against the original Extended Bray Curtis Distances
+plot(nms2.xod, coweeta.species.bcd, pch="*",xlab="Ordination Distance", ylab="Extended B-C Distance")
+abline(0,1,col="red") # put in the 1:1 line (intercept=0, slope=1)
+title("Shepard Diagram")
+box(lwd=2)
+
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+#This came out alright, but not fantastic (we'd want the points to hug the line better)
+#now we want to get the R^2 for the NMS
+#This is done by differencing for NMS, since it doesn't work like a linear model at all
+nms.od1 <- dist(coweeta.species.nms[,1])
+nms.od2 <- dist(coweeta.species.nms[,1:2])
+#check axis 1
+r1 <- cor(coweeta.species.bcd,nms.od1)
+r2.1 <- r1^2; r2.1
+# axis 2 is 2-D minus 1-D solution:
+r2 <- cor(coweeta.species.bcd,nms.od2)
+r2.2 <- r2^2; r2.2-r2.1; r2.2
+#first number is the amount captured by the second axis; second is total variance
+
+```
+
+\newpage
+
+In order to fully understand the ecological implications of the ordination we then created three different plots. We began by preparing the data to be plotted with the ggplot package.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+#first, corrleate the NMS axes (which come from species data) with the environmental variables
+coweeta.species.nms.cor2m <- as.matrix(cor2m(coweeta.env.11[,-1], coweeta.species.nms))
+#this is a table we'll probably want at some point, so make a note of it
+#then create vectors for each of these correaltions 
+set.seed(123)
+coweeta.species.nms.vf <- vf(coweeta.species.nms[,2:1], coweeta.env.11[,-1], nperm=1000)
+
+# make the environmental vectors into a data frame with only the statistically significant vectors
+# take a look at the vector data
+# coweeta.species.nms.vf
+# nrow(coweeta.species.nms.vf)
+
+# extract each column
+NMS1 = coweeta.species.nms.vf[,2]
+NMS2 = coweeta.species.nms.vf[,1]
+pval = coweeta.species.nms.vf[,4]
+r2 = coweeta.species.nms.vf[,3]
+
+# put all of these together into a data frame, scale vector directions with the magnitudes
+coweeta.species.nms.vf.df <- data.frame(NMS1 = NMS1, NMS2 = NMS2, p.val = pval, r.2 = r2) %>%
+  mutate(env.var = rownames(.), NMS1.scaled = NMS1 * r2, NMS2.scaled = NMS2 * r2) %>%
+  filter(p.val <= 0.01) %>%
+  mutate(env.var.tidy = c("Elevation", "Slope", "Aspect", "pH", "Ca", "K", "C", "C:N", "Clay", "Sand"))
+coweeta.species.nms.vf.df
+
+# create one single dataframe with the species values and the NMS values for every plot
+coweeta.species.nms.df.full = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel)
+coweeta.species.nms.df.full
+
+```
+
+Then we created the plots. Figure 7 below shows a graph of the 108 Coweeta plots in ordination space. The first NMS axes (with most of the variance) is on the y-axis, the second (with the rest of the variance) is on the X axis. Placed on top of this ordination are correlation vectors for all of the environmental variables.  Effectively, they show how well correlated the environmental variables are with the ordination axes that were generated from the species data: the direction of the vector shows the direction of the correlation (positive/negative), and the length shows how strong the correlation is. Here, the C:N ratio is strongly correlated with the first NMS axis, where K (potassium) is negatively correlated. This suggests that NMS 1 likely represents a gradient of soil properties, or, given the Coweeta system, it likely represents a gradient of soil moisture. While NMS 2 contained far less variance, it appears to be positively correlated with elevation, meaning that it likely represents a rough elevation gradient.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Environmental vectors showing correlations in NMS space.'}
+
+# ENVIRONMENTAL VARIABLE VECTOR PLOTS
+
+env_vectors.plot =
+
+  ggplot() +
+  # lines to show origin
+  geom_vline(xintercept = 0,
+             color = "black",
+             linetype = 2) +
+  geom_hline(yintercept = 0,
+             color = "black",
+             linetype = 2) +
+  # sites colored for dominant tree species + weighted for BA
+  geom_point(data = coweeta.species.nms.df.full,
+             aes(x = NMS2,
+                 y = NMS1),
+             color = "darkgrey",
+             alpha = 1,
+             size = 2) +
+
+  # # species name labels positioned according to weighted average vectors
+  # geom_text(data = coweeta.species.nms.wa.df,
+  #           aes(x = NMS2,
+  #               y = NMS1,
+  #               label = row.names(coweeta.species.nms.wa.df)),
+  #           alpha = 0.8, size = 3) +
+
+  # environment vectors
+  geom_segment(data = coweeta.species.nms.vf.df,
+               aes(x = 0,
+                   xend = NMS2.scaled,
+                   y = 0,
+                   yend = NMS1.scaled,
+                   colour = env.var.tidy),
+               arrow = arrow(length = unit(.5, "cm")),
+               alpha = 1,
+               size = 1) +
+
+  # environment vector labels
+  geom_text(data = coweeta.species.nms.vf.df,
+            aes(x = NMS2.scaled,
+                y = NMS1.scaled,
+                label = env.var.tidy),
+            alpha = 1,
+            size = 4) +
+
+  # other fomratting stuff
+  labs(colour = "Environmental \nVariable:") +
+  # xlim(-.8,.8) +
+  # ylim(-.8,.8) +
+  theme_grey() +
+  theme(legend.position = "left",
+        text = element_text(size = 12)) +
+  # guides(color = guide_legend(nrow = 9)) +
+  scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
+  scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
+  xlab("NMS2") +
+  ylab("NMS1") +
+  scale_color_manual(values = c("#5EDA9E",
+                                '#D0A9AA',
+                                "#CDAD00",
+                                '#4CB7A5',
+                                '#815E4C',
+                                '#6B8E23',
+                                '#AEBB51',
+                                '#C76E06',
+                                '#9FCAC1',
+                                'darkgrey'))
+
+print(env_vectors.plot)
+
+```
+
+\newpage
+
+We further explored the meaning of the gradients by plotting individual tree species by relative basal area into NMS space. Figure 8 below shows 6 species in ordination space sorted by the soil moisture gradient. What is particularly evident here is the way that sweet birch (BELE) and tulip trees (LITU) appear in the areas of relatively high soil moisture, where pitch pine (PIRI), scarlet oak (QUCO) and mountain laurel tend to appear in places with drier soils. Red maple (ACRU), a generalist, appears all over and does not seem to favor any particular soil type.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Tree species plotted in NMS space to illustrate sorting along the soil moisture gradient (roughly NMS1).'}
+
+# SOIL MOISTURE GRADIENT PLOTS
+
+#first we need to get the species into NMS space; we do this by creating weighted averages of them.
+coweeta.species.nms.wa <- vegan::wascores(coweeta.species.nms, coweeta.species[,-1])
+# get just the important species from the weighted average dataset (these will be labelled)
+coweeta.species.nms.wa.df.sm = as.data.frame(coweeta.species.nms.wa) %>%
+  filter(row.names(.) %in% c('ACRU', 'QUCO', 'KALA', 'PIRI', 'BELE', 'LITU'))
+
+# get dominant trees + their BA for each plot (for nicer points on the graph)
+
+# get just the important species from the relativized species data set
+coweeta.species.rel.subset.sm = coweeta.species.rel %>%
+  select(ACRU, QUCO, KALA, PIRI, BELE, LITU)
+
+# make nms result into a dataframe and bind the relativized dataset onto it
+coweeta.species.nms.df.sm = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel.subset.sm)
+
+# calculate the species with the highest BA in each plot (for better visuals)
+
+highest_vals = c()
+highest_specs = c()
+
+# make new vectors for the highest BA species in each plot
+for (i in 1:nrow(coweeta.species.nms.df.sm)) {
+  values = coweeta.species.nms.df.sm[i, -c(1,2)]
+  highest_val = apply(values[,-1], 1, max)
+  highest_vals = c(highest_vals, highest_val)
+  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
+  highest_specs = c(highest_specs, highest_spec)
+}
+
+# add vectors to dataframe
+coweeta.species.nms.df.sm$highest_vals = highest_vals
+coweeta.species.nms.df.sm$highest_specs = highest_specs
+
+# graph everything in ggplot
+soil_mositure.plot =
+
+  ggplot() +
+  # lines to show origin
+  geom_vline(xintercept = 0,
+             color = "black",
+             linetype = 2) +
+  geom_hline(yintercept = 0,
+             color = "black",
+             linetype = 2) +
+  # # environment vectors
+  # geom_segment(data = coweeta.species.nms.vf.df,
+  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+  #              arrow = arrow(length = unit(.5, "cm")),
+  #              color = "darkgrey",
+  #              alpha = .7,
+  #              size = 1) +
+  # sites colored for dominant tree species + weighted for BA
+  geom_point(data = coweeta.species.nms.df.sm,
+             aes(x = NMS2,
+                 y = NMS1,
+                 color = highest_specs,
+                 size = highest_vals)) +
+
+  # species name labels positioned according to weighted average vectors
+  geom_text(data = coweeta.species.nms.wa.df.sm,
+            aes(x = NMS2,
+                y = NMS1,
+                label = row.names(coweeta.species.nms.wa.df.sm)),
+                # color = row.names(coweeta.species.nms.wa.df.sm)),
+            alpha = 1,
+            size = 4) +
+  # other fomratting stuff
+  labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+    # xlim(-.8,.8) +
+    # ylim(-.8,.8) +
+    theme_gray() +
+    theme(legend.position = "right",
+          text = element_text(size = 12)) +
+  scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
+  scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
+  xlab("NMS2") +
+  ylab("NMS1") +
+  scale_color_manual(values = c("#5EDA9E",
+                                '#D0A9AA',
+                                "#CDAD00",
+                                '#4CB7A5',
+                                '#815E4C',
+                                '#6B8E23'))
+
+print(soil_mositure.plot)
+
+```
+\newpage
+
+Figure 9 emphasizes species that sorted particular well on the elevation gradient. White oak (QUAL) appears with flowering dogwood (COFL) more often in lower elevation sites, where great laurel (RHMA) and black locust (ROPS) appear at much higher elevations.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Tree species plotted in NMS space to illustrate sorting along the elevation gradient (roughly NMS2).'}
+
+# ELEVATION GRADIENT PLOTS 
+
+# get species labels, positioned according to their weighted average vectors
+
+# get just the important species from the weighted average dataset (these will be labelled)
+coweeta.species.nms.wa.df.e = as.data.frame(coweeta.species.nms.wa) %>% 
+  filter(row.names(.) %in% c("ACRU","QUAL","COFL","RHMA","ROPS"))
+
+# get dominant trees + their BA for each plot (for nicer points on the graph)
+
+# get just the important species from the relativized species data set
+coweeta.species.rel.subset.e = coweeta.species.rel %>% 
+  select(ACRU,QUAL,COFL,RHMA,ROPS)
+
+# make nms result into a dataframe and bind the relativized dataset onto it
+coweeta.species.nms.df.e = as.data.frame(coweeta.species.nms) %>%
+  cbind(., coweeta.species.rel.subset.e)
+
+# calculate the species with the highest BA in each plot
+
+highest_vals = c()
+highest_specs = c()
+
+for (i in 1:nrow(coweeta.species.nms.df.e)) { 
+  values = coweeta.species.nms.df.e[i, -c(1,2)]
+  highest_val = apply(values[,-1], 1, max)
+  highest_vals = c(highest_vals, highest_val)
+  highest_spec = names(values)[apply(values, 1, function(x) which(x == highest_val))][1]
+  highest_specs = c(highest_specs, highest_spec)
+}
+
+# add to dataframe 
+coweeta.species.nms.df.e$highest_vals = highest_vals
+coweeta.species.nms.df.e$highest_specs = highest_specs
+
+# graph everything in ggplot
+
+elevation.plot = 
+  
+  ggplot() +
+  
+  # lines to show origin
+  geom_vline(xintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  geom_hline(yintercept = 0, 
+             color = "black", 
+             linetype = 2) +
+  
+  # # environment vectors
+  # geom_segment(data = coweeta.species.nms.vf.df,
+  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+  #              arrow = arrow(length = unit(.5, "cm")),
+  #              color = "darkgrey",
+  #              alpha = .7,
+  #              size = 1) +
+  
+  # sites colored for dominant tree species + weighted for BA
+  geom_point(data = coweeta.species.nms.df.e, 
+             aes(x = NMS2, 
+                 y = NMS1, 
+                 color = highest_specs,
+                 size = highest_vals)) +
+  
+  # species name labels positioned according to weighted average vectors
+  geom_text(data = coweeta.species.nms.wa.df.e, 
+            aes(x = NMS2, 
+                y = NMS1, 
+                label = row.names(coweeta.species.nms.wa.df.e)),
+            alpha = 1, 
+            size = 4) +
+
+  # other fomratting stuff
+  labs(color = "Species Code:", size = expression(paste('Basal Area (', "ft"^2, ')'))) +
+    # xlim(-.8,.8) +
+    # ylim(-.8,.8) +
+    theme_gray() +
+    theme(legend.position = "right",
+          text = element_text(size = 12)) +
+  scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
+  scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
+  xlab("NMS2") +
+  ylab("NMS1") +
+  scale_color_manual(values = c("#D0A9AA",
+                                '#6B8E23',
+                                "#CDAD00",
+                                '#4CB7A5',
+                                '#815E4C'))
+
+print(elevation.plot)
+
+```
+
+\newpage
+
+# Summary and Conclusions
+Overall, these results suggest that in the Coweeta system, soil moisture and composition plays a substantially stronger role in sorting species than elevation does. The relatively light elevation gradient in the southern Appalachians (compared to the profound gradient in the Sierran system as Urban et al. studied, for example), clearly affects the pattern of different trees, but not as substantially as soil. With data of environmental variables more attuned specifically to soil moisture, it might be possible to verify more specifically that this factor is what sorts tree species in this space.
+
+\newpage
+
+# References
+Goslee, S.C. and Urban, D.L. 2007. The ecodist package for dissimilarity-based analysis of ecological data. Journal of Statistical Software 22(7):1-19.
+
+Jari Oksanen, F. Guillaume Blanchet, Michael Friendly, Roeland Kindt, Pierre Legendre, Dan McGlinn, Peter R. Minchin, R. B. O'Hara, Gavin L. Simpson, Peter Solymos, M. Henry H. Stevens, Eduard Szoecs and Helene Wagner (2020). vegan: Community Ecology Package. R package version 2.5-7. https://CRAN.R-project.org/package=vegan
+
+Maechler, M., Rousseeuw, P., Struyf, A., Hubert, M., Hornik, K.(2021).  Cluster: Cluster Analysis Basics and Extensions. R package version 2.1.2.
+
+R Core Team (2020). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+Urban, D. L., Miller, C., Halpin, P. N., & Stephenson, N. L. (2000). Forest gradient response in Sierran landscapes: the physical template. Landscape Ecology, 15(7), 603-620
