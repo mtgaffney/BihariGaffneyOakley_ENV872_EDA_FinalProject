@@ -17,8 +17,6 @@ mainfont: Times New Roman
 \newpage
 \tableofcontents 
 \newpage
-\listoftables 
-\newpage
 \listoffigures 
 \newpage
 
@@ -43,6 +41,11 @@ library(plyr)
 library(ecodist)
 
 # Set your ggplot theme
+# create a theme with gray defaults
+theme1 <- theme_gray() 
+
+# set it as the default theme
+theme_set(theme1)
 
 # Load your datasets
 coweeta.species <- as.data.frame(read_excel("../Data/Raw/chl_sppdataBA.xlsx", sheet = "dataBA"))
@@ -62,9 +65,53 @@ The southern Appalachians are home to numerous woody plant species. These specie
 \newpage
 
 # Dataset Information
-Three datasets in total were used for this analysis, all provided by Urban. Speceis data consists the basal area (BA) of 17 species accross 10 8 plots in Coweeta. Environmetal data consists of 23 environmental variables across the same 108 sites. Finally, we were provided geospatial data for the sites.
+Three datasets in total were used for this analysis, all provided by Dean Urban and acquired between 1997 and 1999. Data collection was organized through 108 sample quadrats (20x20m) arranged in clusters of 3 to 4 along transects that covered an elevation gradient. Species data consists of the basal area of 18 species across 108 plots in Coweeta; realtively uncommon species were removed prior to analysis. Environmental data consists of 20 environmental variables across the same 108 sites. Finally, we were provided geospatial data for the sites.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+Species Code |Scientific Name           |Common Name  
+-------------|--------------------------|--------------------------
+ACRU	       |Acer rubrum	              |Red Maple
+AMAR	       |Amelanchier arborea	      |Common Serviceberry
+BELE	       |Betula lenta	            |Sweet Birch
+CAGL	       |Carya glabra	            |Pignut Hickory
+CATO	       |Carya tomentosa	          |Mockernut Hickory
+COFL	       |Cornus florida	          |Flowering Dogwood
+KALA	       |Kalmia latifolia	        |Mountain Laurel
+LITU	       |Liriodendron tulipifera	  |Tulip Tree
+NYSY	       |Nyssa sylvatica	          |Black Tupelo
+OXAR	       |Oxydendron arboreum	      |Sourwood
+PIRI	       |Pinus rigida	            |Pitch Pine
+QUAL	       |Quercus alba	            |White Oak
+QUCO	       |Quercus coccinea	        |Scarlet Oak
+QUPR	       |Quercus prinus	          |Chestnut Oak
+QURU	       |Quercus rubra	            |Red Oak
+QUVE	       |Quercus velutina	        |Black Oak
+RHMA	       |Rhododendron maximum	    |Great Laurel
+ROPS	       |Robinia pseudoacacia	    |Black Locust
+
+Variable       |Description
+---------------|---------------------------------
+Elevation	     |Elevation (M)
+SlopeDEM	     |Slope
+TAspectD       |Transformed Aspect
+TCI	           |Topograhpic Convergence Index
+xDepth	       |Mean soil depth (cm)
+sDepth	       |Standard deviation of depth
+pH	           |pH
+Acidity	       |Acidity
+Ca	           |Calcium (cmol(+)/kg)
+K	             |Potassium (cmol(+)/kg)
+Mg	           |Magnesium (cmol(+)/kg)
+P	             |Phosphorous (g/g)
+C	             |Soil carbon (%)
+N	             |Nitrogen (%)
+C:N	           |Carbon:Nitrogen ratio
+ECEC	         |Effective Cation Exchange Capacity
+BS	           |Base Saturation
+Clay	         |Clay (%)
+Silt	         |Silt (%)
+Sand	         |Sand (%)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Geographic distribution of the 108 Coweeta plots."}
 
 # get into the correct coordinate system
 coweeta.sf <- coweeta.xy %>% 
@@ -83,7 +130,7 @@ ggplot(data = coweeta.sf) +
 
 We first explored the species composition of the Coweeta plots by looking at the mean basal area (BA) per species.  We did this separately for the canopy and understory species, since these species play very different ecological roles in these ecosystems.  The canopy and understory are made up of very different species, and the trees have very different sizes and abundances. Canopy trees tend to be sparser and larger, while understory trees tend to be denser and smaller. Chestnut oak (QUPR), red maple (ACRU), northern red oak (QURU), and scarlet oak (QUCO) are the trees that make up the most BA among overstory trees, which is to be expected in these oak-hickory dominated mountainous ecosystems.  The highest BA understory species is a native rhododendron (RHMA), which is also to be expected in these ecosystems.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = 'Mean basal area per plot for canopy species at Coweeta LTERS.'}
 
 #display the distribution of basal areas by species
 
@@ -134,7 +181,6 @@ plot.BA.mean.canopy <-
                vjust = -0.5) +
   labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
        x = 'Species Code',
-       title = 'Mean basal area per plot for canopy species at Coweeta LTERS',
        fill = "Species Code") +
   theme(axis.text.x = element_text(angle = 45, 
                                    vjust = 1, 
@@ -143,7 +189,7 @@ plot.BA.mean.canopy
 
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = 'Mean basal area per plot for understory species at Coweeta LTERS.'}
 
 # UNDERSTORY SPECIES BA PLOT
 
@@ -165,7 +211,6 @@ plot.BA.mean.ustory <-
                vjust = -0.5) +
   labs(y = expression(paste('Basal Area (', "ft"^2, ')')), 
        x = 'Species Code',
-       title = 'Mean basal area per plot for understory species at Coweeta LTERS',
        fill = "Species Code") +
   theme(axis.text.x = element_text(angle = 45, 
                                    vjust = 1, 
@@ -203,15 +248,15 @@ plot.ACRU <-
              size = 1) +
   theme(legend.position = 'none') +
   annotate(geom = 'text', 
-           x = 12, 
-           y = 30, 
+           x = 20, 
+           y = 60, 
            color = '#6B8E23',
            label = expression(paste("mean = ", 4.442, " ft"^2))) +
   xlim(0,45) +
   ylim(0,75) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Red maple (ACRU)")
-plot.ACRU
+# plot.ACRU
 
 #QUPR
 
@@ -233,15 +278,15 @@ plot.QUPR <-
              size = 1) +
   theme(legend.position = 'none') +
   annotate(geom = 'text', 
-           x = 15, 
-           y = 25, 
+           x = 20, 
+           y = 60, 
            color = "lightsalmon3",
            label = expression(paste("mean = ", 7.087, " ft"^2))) +
   xlim(0,45) +
   ylim(0,75) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Chestnut oak (QUPR)")
-plot.QUPR
+# plot.QUPR
 
 #QURU
 
@@ -263,15 +308,15 @@ plot.QURU <-
              size = 1) +
   theme(legend.position = 'none') +
   annotate(geom = 'text', 
-           x = 11, 
-           y = 50, 
+           x = 20, 
+           y = 60, 
            color = "#CDAD00",
            label = expression(paste("mean = ", 3.276, " ft"^2))) +
   xlim(0,45) +
   ylim(0,75) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Northern red oak (QURU)")
-plot.QURU
+# plot.QURU
 
 #QUCO
 
@@ -293,30 +338,32 @@ plot.QUCO <-
              size = 1) +
   theme(legend.position = 'none') +
   annotate(geom = 'text', 
-           x = 10, 
-           y = 40, 
+           x = 20, 
+           y = 60, 
            color = "seagreen",
            label = expression(paste("mean = ", 2.564, " ft"^2))) +
   xlim(0,45) +
   ylim(0,75) +
   labs(y="Plot Count", x=expression(paste('Basal Area (', "ft"^2, ')')),
        title = "Scarlet Oak (QUCO)")
-plot.QUCO
+# plot.QUCO
 
 ```
 
 We also created a cowplot of all of these species alongside one another for easy comparison.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+Finally, we explored some of the environmental variables. Although our method of analysis for this data set will not require us to eliminate correlated variables for statistical purposes, it is worth exploring what some of the correlations are.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Frequency distribution of areas for dominant canopy trees in plots at Coweeta LTRS.'}
 
 # COWPLOT OF ALL 4
 
-title <- ggdraw() + 
-  draw_label(
-    "Frequency distribution of areas for dominant canopy trees in plots at Coweeta LTRS",
-    x = 0,
-    hjust = 0,
-    size = 14,) 
+# title <- ggdraw() + 
+#   draw_label(
+#     "Frequency distribution of areas for dominant canopy trees in plots at Coweeta LTRS",
+#     x = 0,
+#     hjust = 0,
+#     size = 14,) 
 
   # theme(
   #   # add margin on the left of the drawing canvas,
@@ -331,21 +378,21 @@ plots_grid <-
             plot.QUCO,
             nrow = 2, 
             align = 'hv')
+print(plots_grid)
 
-plots_grid.title = 
-  plot_grid(title, 
-            plots_grid, 
-            nrow = 2, 
-            align = 'hv',
-            rel_heights = c(0.1, 2))
-
-print(plots_grid.title)
+# plots_grid.title = 
+#   plot_grid(title, 
+#             plots_grid, 
+#             nrow = 2, 
+#             align = 'hv',
+#             rel_heights = c(0.1, 2))
+# 
+# print(plots_grid.title)
 
 ```
 
-Finally, explored some of the environmetnal variables. Although our method of analysis for this data set will not require us to eliminate correlated variables for statistical purposes, it is worth exploring what some of the correlations are.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 names(coweeta.env)
 coweeta.env.cor <- data.frame(cor(coweeta.env[,-1]))
@@ -358,16 +405,18 @@ print(coweeta.env.cor,digits=3)
 \newpage
 
 # Analysis
-## Question 1
+
+**Question:**  
+
 Our question for this analysis is: what environmental variables, or complex of variables, primarily sorts tree communities in Coweeta? Our initial hypothesis, following a similiar study conducted by Urban et al. (2000), is that elevation, serving as a proxy for both temperature and moisture, will function as the primary sorting mechanism for tree species. In order to answer this question, we elected to use Nonmetric Multidimensional Scaling (NMS). NMS is an ordination technique that can visualize trends in complex, non-parametric, multivariate datasets. As a technique, NMS simplifies complex data by plotting sites in ordination space. The aim is to draw sites close together on a graph that are close together ecologically. It converts ecological distance, in other words, to graph distance. 
 
 NMS works through an iterative process. It creates a series of numerical approximations that capture trends within the data. The process first randomly scatters the plots, regresses the ordination distances and ecological distances between the points, and then “jitters” the data once again to create an improved configuration. A successful ordination will create an ordination where ecological distance should correspond with a 1:1 ratio with ordination distance; far ecological distance should be far ordination distance.
 
-NMS is particularly appropriate for this dataset because, unlike other statistical tests, it makes no parametric assumptions about input data sources; as tree basal are not normally distributed, this is particularly advantageous. Additionally, NMS works particularly well when there are a great deal of zeroes in the data, which is often the case for species data on tree plots. 
+NMS is particularly appropriate for this data set because, unlike other statistical tests, it makes no parametric assumptions about input data sources; as tree basal are not normally distributed, this is particularly advantageous. Additionally, NMS works particularly well when there are a great deal of zeroes in the data, which is often the case for species data on tree plots. 
 
-The NMS process began by screenign the environmetnal variables for correlations and removing the correlated variables. Although the actual NMS analysis was run on the species data, removing correlations is important for visual purposes later on. We then relativized the original species data to account for the vast difference in basal area between some of the species. With this relativized data, we then created a distance matrix from the species data. This is done using the ecodist package, using the Bray Curtis method (Urban et al. 2007. This produces a matrix that details how far apart each plot is ecologically from one another. In other words, plots that are ecologically very similar—having similar tree communities, species richness, and basal area—will have different scores than those that are very far apart.
+The NMS process began by screening the environmental variables for correlations and removing the correlated variables. Although the actual NMS analysis was run on the species data, removing correlations is important for visual purposes later on. We then relativized the original species data to account for the vast difference in basal area between some of the species. With this relativized data, we then created a distance matrix from the species data. This is done using the ecodist package, using the Bray Curtis method (Urban et al. 2007. This produces a matrix that details how far apart each plot is ecologically from one another. In other words, plots that are ecologically very similar—having similar tree communities, species richness, and basal area—will have different scores than those that are very far apart.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 source("../scripts/screen_cor.R")
 screen.cor(coweeta.env[,-1])
@@ -389,29 +438,32 @@ coweeta.species.bcd <- distance(as.matrix(coweeta.species.rel), method="bray")
 
 ```
 
-The next step in running the NMS was to start a stepdown procedure. This involved producing a full 6 dimensional NMS object, and then evaluating how well it performed. An NMS will produce two important values: and R^2^ and stress values. With a full ordination, we plotted these values to explore what the optimal number of dimensions for the final NMS would be. The optimal number captures a significant portion of the variance but also has low stress. In this case, 2 axes appears to be the best configuration (with a stress value below .3 and an R^2^ around .6). 
+The next step in running the NMS was to start a stepdown procedure. This involved producing a full 6 dimensional NMS object, and then evaluating how well it performed. An NMS will produce two important values: and R^2^ and stress values (Figure 5). With a full ordination, we plotted these values to explore what the optimal number of dimensions for the final NMS would be. The optimal number captures a significant portion of the variance but also has low stress. In this case, 2 axes appears to be the best configuration (with a stress value below .3 and an R^2^ around .6). 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 #now that we have a distance matrix that will actually work, let's run the NMS.
 #NB: this is a first run, and it will create 60 ordinations (stepdown, 1:6 dims, 10 iterations each). 
 #We will use these to figure out what the best number of axes is.
 coweeta.species.nmsstep <- nmds(coweeta.species.bcd, nits=10, mindim=1, maxdim=6)
 attributes(coweeta.species.nmsstep)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Stress test and R^2^ for 6-dimensional NMS.'}
 
 #Now we need to plot the stress values and R2 values for each dimension (# of axes)
-plot.nmds(coweeta.species.nmsstep) 
+plot.nmds(coweeta.species.nmsstep)
 #second plot shows the R^2 explained by # of dimensions; 2 axes gets us about 60% of the variance, so we can try that.
 
 ```
 
-We then ran a second final NMS with two dimensions. In this case, we have R generate not one but twenty versions of this same NMS, so that we can choose the one that performs best.
+We then ran a second final NMS with two dimensions. In this case, we have R generate not one but twenty versions of this same NMS, so that we can choose the one that performs best. 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 coweeta.species.nmds <- nmds(coweeta.species.bcd, mindim=2, maxdim=2, nits=20)
 #which of these 20 repetitions did the best? NB: NMS is stochastic, so every run is a little different
-(s.min <- which.min(coweeta.species.nmds$stress))
+s.min <- which.min(coweeta.species.nmds$stress)
 #this returns the "stress" value for the best one--need to check what that value actually means
 coweeta.species.nmds$stress[s.min]
 #grab the best run; this explains about 60% of the variance, which is solid but not fantastic
@@ -421,7 +473,7 @@ coweeta.species.nms <- nmds.min(coweeta.species.nmds,dims=2)
 
 The final NMS object, however, is not directly intelligible. This is because NMS generates all of the axes at the same time; in doing so, it does not pay attention to importance. In practice, this means that in order to properly understand what the axes are, it is necessary to run a Principle Component Analysis (PCA) on the axes. The PCA effectively rotates the initial NMS ordination in such a way so as to force the points to align with the axes. It also makes axis 1 contain the majority of the variance.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 #Use a principle component analysis to force most of the variance into axis 1, leaving the rest for axis 2
 nms.pca <- princomp(coweeta.species.nms)
@@ -434,9 +486,9 @@ colnames(coweeta.species.nms) <- c("NMS1", "NMS2")
 
 ```
 
-After rotating the NMS, we checked for how well the analysis performed. We plotted a Shepard Diagram, which illustrates the relationship between ecological distance and ordination distance. Ideally, this is a one to one relationship; here, we see that the origination performed relatively well in aligning ecological distance with ordination space. Here, we also checked the overall R^2^ for the NMS, which was roughly 60% depending on the different runs. Of the variance explained, roughly 40% was captured by NMS 1, and the other 20% was captured by NMS 2.
+After rotating the NMS, we checked for how well the analysis performed. We plotted a Shepard Diagram, which illustrates the relationship between ecological distance and ordination distance (Figure 6). Ideally, this is a one to one relationship; here, we see that the origination performed relatively well in aligning ecological distance with ordination space. Here, we also checked the overall R^2^ for the NMS, which was roughly 60% depending on the different runs. Of the variance explained, roughly 36% was captured by NMS 1, and the other 24% was captured by NMS 2.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Shepard Diagram showing the relationship between ordination distance and ecological distance.'}
 
 #the whole point of NMS is to get the sample points that are ecologically similiar to be close together on a graph
 #A Shepard Diagram let's us know how well we did this.
@@ -447,6 +499,11 @@ plot(nms2.xod, coweeta.species.bcd, pch="*",xlab="Ordination Distance", ylab="Ex
 abline(0,1,col="red") # put in the 1:1 line (intercept=0, slope=1)
 title("Shepard Diagram")
 box(lwd=2)
+
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
 #This came out alright, but not fantastic (we'd want the points to hug the line better)
 #now we want to get the R^2 for the NMS
 #This is done by differencing for NMS, since it doesn't work like a linear model at all
@@ -470,11 +527,13 @@ In order to fully understand the ecological implications of the ordination we th
 coweeta.species.nms.cor2m <- as.matrix(cor2m(coweeta.env.11[,-1], coweeta.species.nms))
 #this is a table we'll probably want at some point, so make a note of it
 #then create vectors for each of these correaltions 
+set.seed(123)
 coweeta.species.nms.vf <- vf(coweeta.species.nms[,2:1], coweeta.env.11[,-1], nperm=1000)
 
 # make the environmental vectors into a data frame with only the statistically significant vectors
 # take a look at the vector data
-coweeta.species.nms.vf
+# coweeta.species.nms.vf
+# nrow(coweeta.species.nms.vf)
 
 # extract each column
 NMS1 = coweeta.species.nms.vf[,2]
@@ -486,7 +545,7 @@ r2 = coweeta.species.nms.vf[,3]
 coweeta.species.nms.vf.df <- data.frame(NMS1 = NMS1, NMS2 = NMS2, p.val = pval, r.2 = r2) %>%
   mutate(env.var = rownames(.), NMS1.scaled = NMS1 * r2, NMS2.scaled = NMS2 * r2) %>%
   filter(p.val <= 0.01) %>%
-  mutate(env.var.tidy = c("Elevation", "Slope", "Aspect", "pH", "Ca", "K", "C", "C:N", "Clay"))
+  mutate(env.var.tidy = c("Elevation", "Slope", "Aspect", "pH", "Ca", "K", "C", "C:N", "Clay", "Sand"))
 coweeta.species.nms.vf.df
 
 # create one single dataframe with the species values and the NMS values for every plot
@@ -496,9 +555,9 @@ coweeta.species.nms.df.full
 
 ```
 
-Then we created the plots. Figure 1 below shows a graph of the 108 Coweeta plots in ordination space. The first NMS axes (with most of the variance) is on the y-axis, the second (with the rest of the variance) is on the X axis. Placed on top of this ordination are correlation vectors for all of the environmental variables.  Efftviely, they show how well correlated the environmental varaibles are with the ordination axes that were generated from the species data: the direction of the vector shows the direction of the correlation (positive/negative), and the length shows how strong the correlation is. Here, the C:N ratio is strongly correlated with the first NMS axis, where K (potassionium) is negatively correlated. This suggests that NMS 1 likely represents a gradient of soil composition, or, given the Coweeta, system, it likely represents a gradient of soil moisture. While NMS 2 contained far less variance, it appearts to be positively correlated with elevation, meaning that it likely represents a rough elevation gradient.
+Then we created the plots. Figure 7 below shows a graph of the 108 Coweeta plots in ordination space. The first NMS axes (with most of the variance) is on the y-axis, the second (with the rest of the variance) is on the X axis. Placed on top of this ordination are correlation vectors for all of the environmental variables.  Effectively, they show how well correlated the environmental variables are with the ordination axes that were generated from the species data: the direction of the vector shows the direction of the correlation (positive/negative), and the length shows how strong the correlation is. Here, the C:N ratio is strongly correlated with the first NMS axis, where K (potassium) is negatively correlated. This suggests that NMS 1 likely represents a gradient of soil properties, or, given the Coweeta system, it likely represents a gradient of soil moisture. While NMS 2 contained far less variance, it appears to be positively correlated with elevation, meaning that it likely represents a rough elevation gradient.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Environmental vectors showing correlations in NMS space.'}
 
 # ENVIRONMENTAL VARIABLE VECTOR PLOTS
 
@@ -536,7 +595,7 @@ env_vectors.plot =
                    colour = env.var.tidy),
                arrow = arrow(length = unit(.5, "cm")),
                alpha = 1,
-               size = 2) +
+               size = 1) +
 
   # environment vector labels
   geom_text(data = coweeta.species.nms.vf.df,
@@ -547,12 +606,13 @@ env_vectors.plot =
             size = 4) +
 
   # other fomratting stuff
-  labs(colour = "Environmental Variable:") +
+  labs(colour = "Environmental \nVariable:") +
   # xlim(-.8,.8) +
   # ylim(-.8,.8) +
   theme_grey() +
-  theme(legend.position = "right",
+  theme(legend.position = "left",
         text = element_text(size = 12)) +
+  # guides(color = guide_legend(nrow = 9)) +
   scale_x_continuous(breaks = seq(-.8, .8, by = .2)) +
   scale_y_continuous(breaks = seq(-.8, .8, by = .2)) +
   xlab("NMS2") +
@@ -565,15 +625,16 @@ env_vectors.plot =
                                 '#6B8E23',
                                 '#AEBB51',
                                 '#C76E06',
-                                '#9FCAC1'))
+                                '#9FCAC1',
+                                'darkgrey'))
 
 print(env_vectors.plot)
 
 ```
 
-We further explored the meaning of the gradients by plotting individual tree species by relative basal area into NMS space. Figure 2 below shows 6 species in ordination space sorted by the soil moisture gradient. What is particularly evident here is the way that sweet birch (BELE) and tulip trees (LITU) appear in the areas of relatively high soil moisture, where pitch pine (PIRI), scarlet oak (QUCO) and mountain laurel tend to appear in places with drier soils. Red maple (ACRU), a generalist, appears all over and does not seem to favor any particular soil type.
+We further explored the meaning of the gradients by plotting individual tree species by relative basal area into NMS space. Figure 8 below shows 6 species in ordination space sorted by the soil moisture gradient. What is particularly evident here is the way that sweet birch (BELE) and tulip trees (LITU) appear in the areas of relatively high soil moisture, where pitch pine (PIRI), scarlet oak (QUCO) and mountain laurel tend to appear in places with drier soils. Red maple (ACRU), a generalist, appears all over and does not seem to favor any particular soil type.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Tree species plotted in NMS space to illustrate sorting along the soil moisture gradient (roughly NMS1).'}
 
 # SOIL MOISTURE GRADIENT PLOTS
 
@@ -622,13 +683,13 @@ soil_mositure.plot =
   geom_hline(yintercept = 0,
              color = "black",
              linetype = 2) +
-  # environment vectors
-  geom_segment(data = coweeta.species.nms.vf.df,
-               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
-               arrow = arrow(length = unit(.5, "cm")),
-               color = "darkgrey",
-               alpha = .7,
-               size = 1) +
+  # # environment vectors
+  # geom_segment(data = coweeta.species.nms.vf.df,
+  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+  #              arrow = arrow(length = unit(.5, "cm")),
+  #              color = "darkgrey",
+  #              alpha = .7,
+  #              size = 1) +
   # sites colored for dominant tree species + weighted for BA
   geom_point(data = coweeta.species.nms.df.sm,
              aes(x = NMS2,
@@ -666,9 +727,9 @@ print(soil_mositure.plot)
 
 ```
 
-Figure 3 emphasizes speices that sorted particular well on the elevation gradient. White oak (QUAL) appears with flowering dogwood (COFL) more often in lower elevation sites, where great laurel (RHMA) and black locust (ROPS) appear at much higher elevations.
+Figure 9 emphasizes species that sorted particular well on the elevation gradient. White oak (QUAL) appears with flowering dogwood (COFL) more often in lower elevation sites, where great laurel (RHMA) and black locust (ROPS) appear at much higher elevations.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap='Tree species plotted in NMS space to illustrate sorting along the elevation gradient (roughly NMS2).'}
 
 # ELEVATION GRADIENT PLOTS 
 
@@ -719,13 +780,13 @@ elevation.plot =
              color = "black", 
              linetype = 2) +
   
-  # environment vectors
-  geom_segment(data = coweeta.species.nms.vf.df,
-               aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
-               arrow = arrow(length = unit(.5, "cm")),
-               color = "darkgrey",
-               alpha = .7,
-               size = 1) +
+  # # environment vectors
+  # geom_segment(data = coweeta.species.nms.vf.df,
+  #              aes(x = 0, xend = NMS2.scaled, y = 0, yend = NMS1.scaled),
+  #              arrow = arrow(length = unit(.5, "cm")),
+  #              color = "darkgrey",
+  #              alpha = .7,
+  #              size = 1) +
   
   # sites colored for dominant tree species + weighted for BA
   geom_point(data = coweeta.species.nms.df.e, 
@@ -766,7 +827,7 @@ print(elevation.plot)
 \newpage
 
 # Summary and Conclusions
-Overall, these results suggest that in the Coweeta system, soil moisture and composition plays a substantially stronger role in sorting species than elevation does. The relatively light elevation gradient in the southern Appalachians (compared to the profound gradient in the Sierran system as Urban et al. studied, for example), clearly affects the pattern of different trees, but not as substantially as soil. With data of environmetnal variables more attuned specifcally to soil moisture, it might be possible to verify more specifically that thsi factor is what sorts tree species in this space.
+Overall, these results suggest that in the Coweeta system, soil moisture and composition plays a substantially stronger role in sorting species than elevation does. The relatively light elevation gradient in the southern Appalachians (compared to the profound gradient in the Sierran system as Urban et al. studied, for example), clearly affects the pattern of different trees, but not as substantially as soil. With data of environmental variables more attuned specifically to soil moisture, it might be possible to verify more specifically that this factor is what sorts tree species in this space.
 
 \newpage
 
